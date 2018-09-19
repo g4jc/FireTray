@@ -7,7 +7,7 @@
  GtkWindow is a widget used for a particular UI effect.
  (http://mail.gnome.org/archives/gtk-app-devel-list/1999-January/msg00138.html) */
 
-var EXPORTED_SYMBOLS = [ "firetray" ];
+var EXPORTED_SYMBOLS = [ "icetray" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -16,20 +16,20 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/commons.js"); // first for Handler.app !
-Cu.import("resource://firetray/ctypes/ctypesMap.jsm");
-Cu.import("resource://firetray/ctypes/linux/gobject.jsm");
-Cu.import("resource://firetray/ctypes/linux/"+firetray.Handler.app.widgetTk+"/gdk.jsm");
-Cu.import("resource://firetray/ctypes/linux/"+firetray.Handler.app.widgetTk+"/gtk.jsm");
-Cu.import("resource://firetray/ctypes/linux/libc.jsm");
-Cu.import("resource://firetray/ctypes/linux/x11.jsm");
-Cu.import("resource://firetray/FiretrayWindow.jsm");
-firetray.Handler.subscribeLibsForClosing([gobject, gdk, gtk, libc, x11, glib]);
+Cu.import("resource://icetray/commons.js"); // first for Handler.app !
+Cu.import("resource://icetray/ctypes/ctypesMap.jsm");
+Cu.import("resource://icetray/ctypes/linux/gobject.jsm");
+Cu.import("resource://icetray/ctypes/linux/"+icetray.Handler.app.widgetTk+"/gdk.jsm");
+Cu.import("resource://icetray/ctypes/linux/"+icetray.Handler.app.widgetTk+"/gtk.jsm");
+Cu.import("resource://icetray/ctypes/linux/libc.jsm");
+Cu.import("resource://icetray/ctypes/linux/x11.jsm");
+Cu.import("resource://icetray/IcetrayWindow.jsm");
+icetray.Handler.subscribeLibsForClosing([gobject, gdk, gtk, libc, x11, glib]);
 
-let log = firetray.Logging.getLogger("firetray.Window");
+let log = icetray.Logging.getLogger("icetray.Window");
 
-if ("undefined" == typeof(firetray.Handler))
-  log.error("This module MUST be imported from/after FiretrayHandler !");
+if ("undefined" == typeof(icetray.Handler))
+  log.error("This module MUST be imported from/after IcetrayHandler !");
 
 const Services2 = {};
 XPCOMUtils.defineLazyServiceGetter(
@@ -39,8 +39,8 @@ XPCOMUtils.defineLazyServiceGetter(
   "nsIUUIDGenerator"
 );
 
-const FIRETRAY_XWINDOW_HIDDEN    = 1 << 0; // when minimized also
-const FIRETRAY_XWINDOW_MAXIMIZED = 1 << 1;
+const ICETRAY_XWINDOW_HIDDEN    = 1 << 0; // when minimized also
+const ICETRAY_XWINDOW_MAXIMIZED = 1 << 1;
 
 /**
  * custum type used to pass data in to and out of findGtkWindowByTitleCb
@@ -53,32 +53,32 @@ var _find_data_t = ctypes.StructType("_find_data_t", [
 // NOTE: storing ctypes pointers into a JS object doesn't work: pointers are
 // "evolving" after a while (maybe due to back and forth conversion). So we
 // need to store them into a real ctypes array !
-firetray.Handler.gtkWindows              = new ctypesMap(gtk.GtkWindow.ptr);
-firetray.Handler.gdkWindows              = new ctypesMap(gdk.GdkWindow.ptr);
-firetray.Handler.gtkPopupMenuWindowItems = new ctypesMap(gtk.GtkImageMenuItem.ptr);
+icetray.Handler.gtkWindows              = new ctypesMap(gtk.GtkWindow.ptr);
+icetray.Handler.gdkWindows              = new ctypesMap(gdk.GdkWindow.ptr);
+icetray.Handler.gtkPopupMenuWindowItems = new ctypesMap(gtk.GtkImageMenuItem.ptr);
 
 
-firetray.Window = new FiretrayWindow();
-firetray.Window.signals = {'focus-in': {callback: {}, handler: {}}};
+icetray.Window = new IcetrayWindow();
+icetray.Window.signals = {'focus-in': {callback: {}, handler: {}}};
 
-firetray.Window.init = function() {
+icetray.Window.init = function() {
   let gtkVersionCheck = gtk.gtk_check_version(
-    gtk.FIRETRAY_REQUIRED_GTK_MAJOR_VERSION,
-    gtk.FIRETRAY_REQUIRED_GTK_MINOR_VERSION,
-    gtk.FIRETRAY_REQUIRED_GTK_MICRO_VERSION
+    gtk.ICETRAY_REQUIRED_GTK_MAJOR_VERSION,
+    gtk.ICETRAY_REQUIRED_GTK_MINOR_VERSION,
+    gtk.ICETRAY_REQUIRED_GTK_MICRO_VERSION
   );
   if (!gtkVersionCheck.isNull())
     log.error("gtk_check_version="+gtkVersionCheck.readString());
 
-  if (firetray.Handler.isChatEnabled()) {
-    Cu.import("resource://firetray/linux/FiretrayChat.jsm");
-    Cu.import("resource://firetray/linux/FiretrayChatStatusIcon.jsm");
+  if (icetray.Handler.isChatEnabled()) {
+    Cu.import("resource://icetray/linux/IcetrayChat.jsm");
+    Cu.import("resource://icetray/linux/IcetrayChatStatusIcon.jsm");
   }
 
   this.initialized = true;
 };
 
-firetray.Window.shutdown = function() {
+icetray.Window.shutdown = function() {
   this.initialized = false;
 };
 
@@ -90,7 +90,7 @@ firetray.Window.shutdown = function() {
  * @param window nsIDOMWindow from Services.wm
  * @return a gtk.GtkWindow.ptr
  */
-firetray.Window.getGtkWindowFromChromeWindow = function(window) {
+icetray.Window.getGtkWindowFromChromeWindow = function(window) {
   let baseWindow = window
         .QueryInterface(Ci.nsIInterfaceRequestor)
         .getInterface(Ci.nsIWebNavigation)
@@ -133,7 +133,7 @@ firetray.Window.getGtkWindowFromChromeWindow = function(window) {
  * @param gtkWidget: GtkWidget from gtk_window_list_toplevels()
  * @param userData: _find_data_t
  */
-firetray.Window._findGtkWindowByTitle = function(gtkWidget, userData) {
+icetray.Window._findGtkWindowByTitle = function(gtkWidget, userData) {
   let data = ctypes.cast(userData, _find_data_t.ptr);
   let inTitle = data.contents.inTitle;
 
@@ -147,7 +147,7 @@ firetray.Window._findGtkWindowByTitle = function(gtkWidget, userData) {
   }
 };
 
-firetray.Window.getGdkWindowFromGtkWindow = function(gtkWin) {
+icetray.Window.getGdkWindowFromGtkWindow = function(gtkWin) {
   try {
     let gtkWid = ctypes.cast(gtkWin, gtk.GtkWidget.ptr);
     return gtk.gtk_widget_get_window(gtkWid);
@@ -157,46 +157,46 @@ firetray.Window.getGdkWindowFromGtkWindow = function(gtkWin) {
   return null;
 };
 
-if (firetray.Handler.app.widgetTk == "gtk2") {
+if (icetray.Handler.app.widgetTk == "gtk2") {
 
-  firetray.Window.getXIDFromGdkWindow = function(gdkWin) {
+  icetray.Window.getXIDFromGdkWindow = function(gdkWin) {
     return gdk.gdk_x11_drawable_get_xid(ctypes.cast(gdkWin, gdk.GdkDrawable.ptr));
   };
 
-  firetray.Window.getXIDFromGtkWidget = function(gtkWid) {
+  icetray.Window.getXIDFromGtkWidget = function(gtkWid) {
     let gdkWin = gtk.gtk_widget_get_window(gtkWid);
     return gdk.gdk_x11_drawable_get_xid(ctypes.cast(gdkWin, gdk.GdkDrawable.ptr));
   };
 
 }
-else if (firetray.Handler.app.widgetTk == "gtk3") {
+else if (icetray.Handler.app.widgetTk == "gtk3") {
 
-  firetray.Window.getXIDFromGdkWindow = function(gdkWin) {
+  icetray.Window.getXIDFromGdkWindow = function(gdkWin) {
     return gdk.gdk_x11_window_get_xid(gdkWin);
   };
 
-  firetray.Window.getXIDFromGtkWidget = function(gtkWid) {
+  icetray.Window.getXIDFromGtkWidget = function(gtkWid) {
     let gdkWin = gtk.gtk_widget_get_window(gtkWid);
     return gdk.gdk_x11_window_get_xid(gdkWin);
   };
 
 }
 else {
-  log.error("Unhandled widgetTk: "+firetray.Handler.app.widgetTk);
+  log.error("Unhandled widgetTk: "+icetray.Handler.app.widgetTk);
 }
 
-firetray.Window.addrPointedByInHex = function(ptr) {
+icetray.Window.addrPointedByInHex = function(ptr) {
   return "0x"+ctypes.cast(ptr, ctypes.uintptr_t.ptr).contents.toString(16);
 };
 
-firetray.Window.getGdkWindowFromNativeHandle = function(nativeHandle) {
+icetray.Window.getGdkWindowFromNativeHandle = function(nativeHandle) {
   let gdkw = new gdk.GdkWindow.ptr(ctypes.UInt64(nativeHandle)); // a new pointer to the GdkWindow
   gdkw = gdk.gdk_window_get_toplevel(gdkw);
   log.debug("gdkw="+gdkw+" *gdkw="+this.addrPointedByInHex(gdkw));
   return gdkw;
 };
 
-firetray.Window.getGtkWindowFromGdkWindow = function(gdkWin) {
+icetray.Window.getGtkWindowFromGdkWindow = function(gdkWin) {
   let gptr = new gobject.gpointer;
   gdk.gdk_window_get_user_data(gdkWin, gptr.address());
   log.debug("gptr="+gptr+" *gptr="+this.addrPointedByInHex(gptr));
@@ -206,163 +206,163 @@ firetray.Window.getGtkWindowFromGdkWindow = function(gdkWin) {
 };
 
 /* consider using getRegisteredWinIdFromChromeWindow() if you only need the XID */
-firetray.Window.getWindowsFromChromeWindow = function(win) {
-  let baseWin = firetray.Handler.getWindowInterface(win, "nsIBaseWindow");
+icetray.Window.getWindowsFromChromeWindow = function(win) {
+  let baseWin = icetray.Handler.getWindowInterface(win, "nsIBaseWindow");
   let nativeHandle = baseWin.nativeHandle; // Moz' private pointer to the GdkWindow
   log.debug("nativeHandle="+nativeHandle);
   let gtkWin, gdkWin;
   if (nativeHandle) { // Gecko 17+
-    gdkWin = firetray.Window.getGdkWindowFromNativeHandle(nativeHandle);
-    gtkWin = firetray.Window.getGtkWindowFromGdkWindow(gdkWin);
+    gdkWin = icetray.Window.getGdkWindowFromNativeHandle(nativeHandle);
+    gtkWin = icetray.Window.getGtkWindowFromGdkWindow(gdkWin);
   } else {
-    gtkWin = firetray.Window.getGtkWindowFromChromeWindow(win);
-    gdkWin = firetray.Window.getGdkWindowFromGtkWindow(gtkWin);
+    gtkWin = icetray.Window.getGtkWindowFromChromeWindow(win);
+    gdkWin = icetray.Window.getGdkWindowFromGtkWindow(gtkWin);
   }
-  let xid = firetray.Window.getXIDFromGdkWindow(gdkWin);
+  let xid = icetray.Window.getXIDFromGdkWindow(gdkWin);
   log.debug("XID="+xid);
   return [baseWin, gtkWin, gdkWin, xid];
 };
 
-firetray.Window.unregisterWindowByXID = function(xid) {
-  if (!firetray.Handler.windows.hasOwnProperty(xid)) {
+icetray.Window.unregisterWindowByXID = function(xid) {
+  if (!icetray.Handler.windows.hasOwnProperty(xid)) {
     log.error("can't unregister unknown window "+xid);
     return false;
   }
 
-  firetray.Window.detachOnFocusInCallback(xid);
-  if (firetray.Handler.isChatEnabled() && firetray.Chat.initialized) {
-    firetray.Chat.detachSelectListeners(firetray.Handler.windows[xid].chromeWin);
+  icetray.Window.detachOnFocusInCallback(xid);
+  if (icetray.Handler.isChatEnabled() && icetray.Chat.initialized) {
+    icetray.Chat.detachSelectListeners(icetray.Handler.windows[xid].chromeWin);
   }
 
-  if (!delete firetray.Handler.windows[xid])
+  if (!delete icetray.Handler.windows[xid])
     throw new DeleteError();
-  firetray.Handler.gtkWindows.remove(xid);
-  firetray.Handler.gdkWindows.remove(xid);
+  icetray.Handler.gtkWindows.remove(xid);
+  icetray.Handler.gdkWindows.remove(xid);
 
-  firetray.PopupMenu.removeWindowItem(xid);
+  icetray.PopupMenu.removeWindowItem(xid);
 
   log.debug("window "+xid+" unregistered");
   return true;
 };
 
-firetray.Window.show = function(xid) {
+icetray.Window.show = function(xid) {
   log.debug("show xid="+xid);
 
   // try to restore previous state. TODO: z-order respected ?
-  firetray.Window.restorePositionAndSize(xid);
-  firetray.Window.restoreStates(xid);
+  icetray.Window.restorePositionAndSize(xid);
+  icetray.Window.restoreStates(xid);
 
   // better visual effect if visibility set after restorePosition, but some
   // WMs like compiz seem not to honor position setting if window not visible
-  firetray.Window.setVisibility(xid, true);
+  icetray.Window.setVisibility(xid, true);
 
   // after show
-  firetray.Window.restoreDesktop(xid);
-  if (firetray.Utils.prefService.getBoolPref('show_activates'))
-    firetray.Window.activate(xid);
+  icetray.Window.restoreDesktop(xid);
+  if (icetray.Utils.prefService.getBoolPref('show_activates'))
+    icetray.Window.activate(xid);
 
-  firetray.PopupMenu.hideWindowItemAndSeparatorMaybe(xid);
-  firetray.Handler.showHideIcon();
+  icetray.PopupMenu.hideWindowItemAndSeparatorMaybe(xid);
+  icetray.Handler.showHideIcon();
 };
 
 /* FIXME: hiding windows should also hide child windows, like message windows
- in Thunderbird */
-firetray.Window.hide = function(xid) {
+ in Icedove-UXP */
+icetray.Window.hide = function(xid) {
   log.debug("hide");
 
-  firetray.Window.savePositionAndSize(xid);
-  firetray.Window.saveStates(xid);
-  firetray.Window.saveDesktop(xid);
+  icetray.Window.savePositionAndSize(xid);
+  icetray.Window.saveStates(xid);
+  icetray.Window.saveDesktop(xid);
 
-  firetray.Window.setVisibility(xid, false);
+  icetray.Window.setVisibility(xid, false);
 
-  firetray.PopupMenu.showWindowItem(xid);
-  firetray.Handler.showHideIcon();
+  icetray.PopupMenu.showWindowItem(xid);
+  icetray.Handler.showHideIcon();
 };
 
-firetray.Window.startupHide = function(xid) {
+icetray.Window.startupHide = function(xid) {
   log.debug('startupHide: '+xid);
 
   // also it seems cleaner, baseWin.visibility=false removes the possibility
   // to restore the app by calling it from the command line. Not sure why...
-  firetray.Window.setVisibility(xid, false);
+  icetray.Window.setVisibility(xid, false);
 
-  firetray.PopupMenu.showWindowItem(xid);
-  firetray.Handler.showHideIcon();
+  icetray.PopupMenu.showWindowItem(xid);
+  icetray.Handler.showHideIcon();
 };
 
-firetray.Window.savePositionAndSize = function(xid) {
+icetray.Window.savePositionAndSize = function(xid) {
   let gx = {}, gy = {}, gwidth = {}, gheight = {};
-  firetray.Handler.windows[xid].baseWin.getPositionAndSize(gx, gy, gwidth, gheight);
-  firetray.Handler.windows[xid].savedX = gx.value;
-  firetray.Handler.windows[xid].savedY = gy.value;
-  firetray.Handler.windows[xid].savedWidth = gwidth.value;
-  firetray.Handler.windows[xid].savedHeight = gheight.value;
+  icetray.Handler.windows[xid].baseWin.getPositionAndSize(gx, gy, gwidth, gheight);
+  icetray.Handler.windows[xid].savedX = gx.value;
+  icetray.Handler.windows[xid].savedY = gy.value;
+  icetray.Handler.windows[xid].savedWidth = gwidth.value;
+  icetray.Handler.windows[xid].savedHeight = gheight.value;
   log.debug("save: gx="+gx.value+", gy="+gy.value+", gwidth="+gwidth.value+", gheight="+gheight.value);
 };
 
-firetray.Window.restorePositionAndSize = function(xid) {
-  if ("undefined" === typeof(firetray.Handler.windows[xid].savedX))
+icetray.Window.restorePositionAndSize = function(xid) {
+  if ("undefined" === typeof(icetray.Handler.windows[xid].savedX))
     return; // windows[xid].saved* may not be initialized
 
-  log.debug("restore: x="+firetray.Handler.windows[xid].savedX+", y="+firetray.Handler.windows[xid].savedY+", w="+firetray.Handler.windows[xid].savedWidth+", h="+firetray.Handler.windows[xid].savedHeight);
-  firetray.Handler.windows[xid].baseWin.setPositionAndSize(
-    firetray.Handler.windows[xid].savedX,
-    firetray.Handler.windows[xid].savedY,
-    firetray.Handler.windows[xid].savedWidth,
-    firetray.Handler.windows[xid].savedHeight,
+  log.debug("restore: x="+icetray.Handler.windows[xid].savedX+", y="+icetray.Handler.windows[xid].savedY+", w="+icetray.Handler.windows[xid].savedWidth+", h="+icetray.Handler.windows[xid].savedHeight);
+  icetray.Handler.windows[xid].baseWin.setPositionAndSize(
+    icetray.Handler.windows[xid].savedX,
+    icetray.Handler.windows[xid].savedY,
+    icetray.Handler.windows[xid].savedWidth,
+    icetray.Handler.windows[xid].savedHeight,
     false); // repaint
 
   ['savedX', 'savedX', 'savedWidth', 'savedHeight'].forEach(function(element) {
-    delete firetray.Handler.windows[xid][element];
+    delete icetray.Handler.windows[xid][element];
   });
 };
 
-firetray.Window.saveStates = function(xid) {
-  let winStates = firetray.Window.getXWindowStates(x11.Window(xid));
-  firetray.Handler.windows[xid].savedStates = winStates;
+icetray.Window.saveStates = function(xid) {
+  let winStates = icetray.Window.getXWindowStates(x11.Window(xid));
+  icetray.Handler.windows[xid].savedStates = winStates;
   log.debug("save: windowStates="+winStates);
 };
 
 // NOTE: fluxbox bug probably: if hidden and restored iconified, then
 // switching to desktop de-iconifies it ?!
-firetray.Window.restoreStates = function(xid) {
-  let winStates = firetray.Handler.windows[xid].savedStates;
+icetray.Window.restoreStates = function(xid) {
+  let winStates = icetray.Handler.windows[xid].savedStates;
   log.debug("restored WindowStates: " + winStates);
 
-  if (winStates & FIRETRAY_XWINDOW_HIDDEN) {
-    firetray.Handler.windows[xid].chromeWin.minimize();
+  if (winStates & ICETRAY_XWINDOW_HIDDEN) {
+    icetray.Handler.windows[xid].chromeWin.minimize();
     log.debug("restored minimized");
   }
 
   /* we expect the WM to actually show the window *not* minimized once
    restored */
-  if (firetray.Utils.prefService.getBoolPref('hides_on_minimize'))
+  if (icetray.Utils.prefService.getBoolPref('hides_on_minimize'))
     // help prevent getting iconify event following show()
-    firetray.Handler.windows[xid].chromeWin.restore(); // nsIDOMChromeWindow.idl
+    icetray.Handler.windows[xid].chromeWin.restore(); // nsIDOMChromeWindow.idl
 
-  if (winStates & FIRETRAY_XWINDOW_MAXIMIZED) {
-    firetray.Handler.windows[xid].chromeWin.maximize();
+  if (winStates & ICETRAY_XWINDOW_MAXIMIZED) {
+    icetray.Handler.windows[xid].chromeWin.maximize();
     log.debug("restored maximized");
   }
 
-  delete firetray.Handler.windows[xid].savedStates;
+  delete icetray.Handler.windows[xid].savedStates;
 };
 
-firetray.Window.saveDesktop = function(xid) {
-  if (!firetray.Utils.prefService.getBoolPref('remember_desktop'))
+icetray.Window.saveDesktop = function(xid) {
+  if (!icetray.Utils.prefService.getBoolPref('remember_desktop'))
     return;
 
-  let winDesktop = firetray.Window.getXWindowDesktop(x11.Window(xid));
-  firetray.Handler.windows[xid].savedDesktop = winDesktop;
+  let winDesktop = icetray.Window.getXWindowDesktop(x11.Window(xid));
+  icetray.Handler.windows[xid].savedDesktop = winDesktop;
   log.debug("save: windowDesktop="+winDesktop);
 };
 
-firetray.Window.restoreDesktop = function(xid) {
-  if (!firetray.Utils.prefService.getBoolPref('remember_desktop'))
+icetray.Window.restoreDesktop = function(xid) {
+  if (!icetray.Utils.prefService.getBoolPref('remember_desktop'))
     return;
 
-  let desktopDest = firetray.Handler.windows[xid].savedDesktop;
+  let desktopDest = icetray.Handler.windows[xid].savedDesktop;
   if (desktopDest === null || "undefined" === typeof(desktopDest)) return;
 
   let dataSize = 1;
@@ -371,25 +371,25 @@ firetray.Window.restoreDesktop = function(xid) {
   this.xSendClientMessgeEvent(xid, x11.current.Atoms._NET_WM_DESKTOP, data, dataSize);
 
   log.debug("restored to desktop: "+desktopDest);
-  delete firetray.Handler.windows[xid].savedDesktop;
+  delete icetray.Handler.windows[xid].savedDesktop;
 };
 
-firetray.Window.getVisibility = function(xid) {
-  let gtkWidget = ctypes.cast(firetray.Handler.gtkWindows.get(xid), gtk.GtkWidget.ptr);
+icetray.Window.getVisibility = function(xid) {
+  let gtkWidget = ctypes.cast(icetray.Handler.gtkWindows.get(xid), gtk.GtkWidget.ptr);
   // nsIBaseWin.visibility always true
   return gtk.gtk_widget_get_visible(gtkWidget);
 };
 
-firetray.Window.setVisibility = function(xid, visibility) {
+icetray.Window.setVisibility = function(xid, visibility) {
   log.debug("setVisibility="+visibility);
-  let gtkWidget = ctypes.cast(firetray.Handler.gtkWindows.get(xid), gtk.GtkWidget.ptr);
+  let gtkWidget = ctypes.cast(icetray.Handler.gtkWindows.get(xid), gtk.GtkWidget.ptr);
   if (visibility)
     gtk.gtk_widget_show_all(gtkWidget);
   else
     gtk.gtk_widget_hide(gtkWidget);
 };
 
-firetray.Window.xSendClientMessgeEvent = function(xid, atom, data, dataSize) {
+icetray.Window.xSendClientMessgeEvent = function(xid, atom, data, dataSize) {
   let xev = new x11.XClientMessageEvent;
   xev.type = x11.ClientMessage;
   xev.window = x11.Window(xid);
@@ -409,15 +409,15 @@ firetray.Window.xSendClientMessgeEvent = function(xid, atom, data, dataSize) {
 /**
  * raises window on top and give focus.
  */
-firetray.Window.activate = function(xid) {
+icetray.Window.activate = function(xid) {
   // broken in KDE ?
-  gtk.gtk_window_present(firetray.Handler.gtkWindows.get(xid));
+  gtk.gtk_window_present(icetray.Handler.gtkWindows.get(xid));
   log.debug("window raised");
 };
 
-firetray.Window.setUrgency = function(xid, urgent) {
+icetray.Window.setUrgency = function(xid, urgent) {
   log.debug("setUrgency: "+urgent);
-  gtk.gtk_window_set_urgency_hint(firetray.Handler.gtkWindows.get(xid), urgent);
+  gtk.gtk_window_set_urgency_hint(icetray.Handler.gtkWindows.get(xid), urgent);
 };
 
 /**
@@ -425,7 +425,7 @@ firetray.Window.setUrgency = function(xid, urgent) {
  * @param xwin: a x11.Window
  * @param prop: a x11.Atom
  */
-firetray.Window.getXWindowProperties = function(xwin, prop) {
+icetray.Window.getXWindowProperties = function(xwin, prop) {
   // infos returned by XGetWindowProperty() - FIXME: should be freed ?
   let actual_type = new x11.Atom;
   let actual_format = new ctypes.int;
@@ -441,11 +441,11 @@ firetray.Window.getXWindowProperties = function(xwin, prop) {
     bytes_after.address(), prop_value.address());
   log.debug("XGetWindowProperty res="+res+", actual_type="+actual_type.value+", actual_format="+actual_format.value+", bytes_after="+bytes_after.value+", nitems="+nitems.value);
 
-  if (!firetray.js.strEquals(res, x11.Success)) {
+  if (!icetray.js.strEquals(res, x11.Success)) {
     log.error("XGetWindowProperty failed");
     return [null, null];
   }
-  if (firetray.js.strEquals(actual_type.value, x11.None)) {
+  if (icetray.js.strEquals(actual_type.value, x11.None)) {
     log.debug("property not found");
     return [null, null];
   }
@@ -470,11 +470,11 @@ firetray.Window.getXWindowProperties = function(xwin, prop) {
  * based on WM_STATE. For instance, WM_STATE becomes 'Iconic' on virtual
  * desktop change...
  */
-firetray.Window.getXWindowStates = function(xwin) {
+icetray.Window.getXWindowStates = function(xwin) {
   let winStates = 0;
 
   let [propsFound, nitems] =
-        firetray.Window.getXWindowProperties(xwin, x11.current.Atoms._NET_WM_STATE);
+        icetray.Window.getXWindowProperties(xwin, x11.current.Atoms._NET_WM_STATE);
   log.debug("propsFound, nitems="+propsFound+", "+nitems);
   if (!propsFound) return 0;
 
@@ -482,33 +482,33 @@ firetray.Window.getXWindowStates = function(xwin) {
   for (let i=0, len=nitems.value; i<len; ++i) {
     log.debug("i: "+propsFound.contents[i]);
     let currentProp = propsFound.contents[i];
-    if (firetray.js.strEquals(currentProp, x11.current.Atoms['_NET_WM_STATE_HIDDEN']))
-      winStates |= FIRETRAY_XWINDOW_HIDDEN;
-    else if (firetray.js.strEquals(currentProp, x11.current.Atoms['_NET_WM_STATE_MAXIMIZED_HORZ']))
+    if (icetray.js.strEquals(currentProp, x11.current.Atoms['_NET_WM_STATE_HIDDEN']))
+      winStates |= ICETRAY_XWINDOW_HIDDEN;
+    else if (icetray.js.strEquals(currentProp, x11.current.Atoms['_NET_WM_STATE_MAXIMIZED_HORZ']))
       maximizedHorz = true;
-    else if (firetray.js.strEquals(currentProp, x11.current.Atoms['_NET_WM_STATE_MAXIMIZED_VERT']))
+    else if (icetray.js.strEquals(currentProp, x11.current.Atoms['_NET_WM_STATE_MAXIMIZED_VERT']))
       maximizedVert = true;
   }
 
   if (maximizedHorz && maximizedVert)
-    winStates |= FIRETRAY_XWINDOW_MAXIMIZED;
+    winStates |= ICETRAY_XWINDOW_MAXIMIZED;
 
   x11.XFree(propsFound);
 
   return winStates;
 };
 
-firetray.Window.getXWindowDesktop = function(xwin) {
+icetray.Window.getXWindowDesktop = function(xwin) {
   let desktop = null;
 
   let [propsFound, nitems] =
-        firetray.Window.getXWindowProperties(xwin, x11.current.Atoms._NET_WM_DESKTOP);
+        icetray.Window.getXWindowProperties(xwin, x11.current.Atoms._NET_WM_DESKTOP);
   log.debug("DESKTOP propsFound, nitems="+propsFound+", "+nitems);
   if (!propsFound) return null;
 
-  if (firetray.js.strEquals(nitems.value, 0))
+  if (icetray.js.strEquals(nitems.value, 0))
     log.warn("desktop number not found");
-  else if (firetray.js.strEquals(nitems.value, 1))
+  else if (icetray.js.strEquals(nitems.value, 1))
     desktop = propsFound.contents[0];
   else
     throw new RangeError("more than one desktop found");
@@ -518,7 +518,7 @@ firetray.Window.getXWindowDesktop = function(xwin) {
   return desktop;
 };
 
-firetray.Window.correctSubscribedEventMasks = function(gdkWin) {
+icetray.Window.correctSubscribedEventMasks = function(gdkWin) {
   let eventMask = gdk.gdk_window_get_events(gdkWin);
   let eventMaskNeeded = gdk.GDK_STRUCTURE_MASK | gdk.GDK_PROPERTY_CHANGE_MASK |
         gdk.GDK_VISIBILITY_NOTIFY_MASK;
@@ -529,7 +529,7 @@ firetray.Window.correctSubscribedEventMasks = function(gdkWin) {
   }
 };
 
-firetray.Window.filterWindow = function(xev, gdkEv, data) {
+icetray.Window.filterWindow = function(xev, gdkEv, data) {
   if (!xev)
     return gdk.GDK_FILTER_CONTINUE;
 
@@ -540,29 +540,29 @@ firetray.Window.filterWindow = function(xev, gdkEv, data) {
 
   case x11.MapNotify:
     log.debug("MapNotify");
-    let gdkWinStateOnMap = gdk.gdk_window_get_state(firetray.Handler.gdkWindows.get(xid));
+    let gdkWinStateOnMap = gdk.gdk_window_get_state(icetray.Handler.gdkWindows.get(xid));
     log.debug("gdkWinState="+gdkWinStateOnMap+" for xid="+xid);
-    let win = firetray.Handler.windows[xid];
-    if (firetray.Handler.appStarted && !win.visible) {
+    let win = icetray.Handler.windows[xid];
+    if (icetray.Handler.appStarted && !win.visible) {
       // when app hidden at startup, then called from command line without
       // any argument (not through FireTray that is)
       log.warn("window not visible, correcting visibility");
-      log.debug("visibleWindowsCount="+firetray.Handler.visibleWindowsCount);
+      log.debug("visibleWindowsCount="+icetray.Handler.visibleWindowsCount);
     }
     break;
 
   case x11.UnmapNotify:       // for catching 'iconify'
     log.debug("UnmapNotify");
 
-    let winStates = firetray.Window.getXWindowStates(xid);
-    let isHidden =  winStates & FIRETRAY_XWINDOW_HIDDEN;
+    let winStates = icetray.Window.getXWindowStates(xid);
+    let isHidden =  winStates & ICETRAY_XWINDOW_HIDDEN;
     log.debug("winStates="+winStates+", isHidden="+isHidden);
     // NOTE: Gecko 8.0 provides the 'sizemodechange' event, which comes once
     // the window is minimized. i.e. preventDefault() or returning false won't
     // prevent the event.
     if (isHidden) {
       log.debug("GOT ICONIFIED");
-      firetray.Handler.onMinimize(xid);
+      icetray.Handler.onMinimize(xid);
     }
     break;
 
@@ -574,7 +574,7 @@ firetray.Window.filterWindow = function(xev, gdkEv, data) {
   return gdk.GDK_FILTER_CONTINUE;
 };
 
-firetray.Window.startupFilter = function(xev, gdkEv, data) {
+icetray.Window.startupFilter = function(xev, gdkEv, data) {
   if (!xev)
     return gdk.GDK_FILTER_CONTINUE;
 
@@ -585,41 +585,41 @@ firetray.Window.startupFilter = function(xev, gdkEv, data) {
   // *before* the window is actually mapped, in order to minimize it before
   // it's shown.
   if (xany.contents.type === x11.MapNotify) {
-    gdk.gdk_window_remove_filter(firetray.Handler.gdkWindows.get(xid),
-                                 firetray.Handler.windows[xid].startupFilterCb, null);
-    if (firetray.Utils.prefService.getBoolPref('start_hidden')) {
+    gdk.gdk_window_remove_filter(icetray.Handler.gdkWindows.get(xid),
+                                 icetray.Handler.windows[xid].startupFilterCb, null);
+    if (icetray.Utils.prefService.getBoolPref('start_hidden')) {
       log.debug("start_hidden");
-      firetray.Window.startupHide(xid);
+      icetray.Window.startupHide(xid);
     }
   }
 
   return gdk.GDK_FILTER_CONTINUE;
 };
 
-firetray.Window.showAllWindowsAndActivate = function() {
-  let visibilityRate = firetray.Handler.visibleWindowsCount/firetray.Handler.windowsCount;
+icetray.Window.showAllWindowsAndActivate = function() {
+  let visibilityRate = icetray.Handler.visibleWindowsCount/icetray.Handler.windowsCount;
   log.debug("visibilityRate="+visibilityRate);
   if (visibilityRate < 1)
-    firetray.Handler.showAllWindows();
+    icetray.Handler.showAllWindows();
 
-  for(var key in firetray.Handler.windows); // FIXME: this is not the proper way for finding the last registered window !
-  firetray.Window.activate(key);
+  for(var key in icetray.Handler.windows); // FIXME: this is not the proper way for finding the last registered window !
+  icetray.Window.activate(key);
 };
 
-firetray.Window.attachOnFocusInCallback = function(xid) {
+icetray.Window.attachOnFocusInCallback = function(xid) {
   log.debug("attachOnFocusInCallback xid="+xid);
   let callback = gtk.GCallbackWidgetFocusEvent_t(
-    firetray.Window.onFocusIn, null, FIRETRAY_CB_SENTINEL);
+    icetray.Window.onFocusIn, null, ICETRAY_CB_SENTINEL);
   this.signals['focus-in'].callback[xid] = callback;
   let handlerId = gobject.g_signal_connect(
-    firetray.Handler.gtkWindows.get(xid), "focus-in-event", callback, null);
+    icetray.Handler.gtkWindows.get(xid), "focus-in-event", callback, null);
   log.debug("focus-in handler="+handlerId);
   this.signals['focus-in'].handler[xid] = handlerId;
 };
 
-firetray.Window.detachOnFocusInCallback = function(xid) {
+icetray.Window.detachOnFocusInCallback = function(xid) {
   log.debug("detachOnFocusInCallback xid="+xid);
-  let gtkWin = firetray.Handler.gtkWindows.get(xid);
+  let gtkWin = icetray.Handler.gtkWindows.get(xid);
   gobject.g_signal_handler_disconnect(
     gtkWin,
     gobject.gulong(this.signals['focus-in'].handler[xid])
@@ -631,15 +631,15 @@ firetray.Window.detachOnFocusInCallback = function(xid) {
 // NOTE: fluxbox issues a FocusIn event when switching workspace
 // by hotkey, which means 2 FocusIn events when switching to a moz app :(
 // (http://sourceforge.net/tracker/index.php?func=detail&aid=3190205&group_id=35398&atid=413960)
-firetray.Window.onFocusIn = function(widget, event, data) {
+icetray.Window.onFocusIn = function(widget, event, data) {
   log.debug("onFocusIn");
-  let xid = firetray.Window.getXIDFromGtkWidget(widget);
+  let xid = icetray.Window.getXIDFromGtkWidget(widget);
   log.debug("xid="+xid);
 
-  firetray.Window.setUrgency(xid, false);
+  icetray.Window.setUrgency(xid, false);
 
-  if (firetray.Handler.isChatEnabled() && firetray.Chat.initialized) {
-    firetray.Chat.stopGetAttentionMaybe(xid);
+  if (icetray.Handler.isChatEnabled() && icetray.Chat.initialized) {
+    icetray.Chat.stopGetAttentionMaybe(xid);
   }
 
   let stopPropagation = false;
@@ -647,35 +647,35 @@ firetray.Window.onFocusIn = function(widget, event, data) {
 };
 
 
-///////////////////////// firetray.Handler overriding /////////////////////////
+///////////////////////// icetray.Handler overriding /////////////////////////
 
 /** debug facility */
-firetray.Handler.dumpWindows = function() {
-  log.debug(firetray.Handler.windowsCount);
-  for (let winId in firetray.Handler.windows) log.info(winId+"="+firetray.Handler.gtkWindows.get(winId));
+icetray.Handler.dumpWindows = function() {
+  log.debug(icetray.Handler.windowsCount);
+  for (let winId in icetray.Handler.windows) log.info(winId+"="+icetray.Handler.gtkWindows.get(winId));
 };
 
-firetray.Handler.registerWindow = function(win) {
+icetray.Handler.registerWindow = function(win) {
   log.debug("register window");
 
   // register
-  let [baseWin, gtkWin, gdkWin, xid] = firetray.Window.getWindowsFromChromeWindow(win);
+  let [baseWin, gtkWin, gdkWin, xid] = icetray.Window.getWindowsFromChromeWindow(win);
   this.windows[xid] = {};
   this.windows[xid].chromeWin = win;
   this.windows[xid].baseWin = baseWin;
   Object.defineProperties(this.windows[xid], {
-    "visible": { get: function(){return firetray.Window.getVisibility(xid);} }
+    "visible": { get: function(){return icetray.Window.getVisibility(xid);} }
   });
-  firetray.Window.correctSubscribedEventMasks(gdkWin);
+  icetray.Window.correctSubscribedEventMasks(gdkWin);
   try {
     this.gtkWindows.insert(xid, gtkWin);
     this.gdkWindows.insert(xid, gdkWin);
-    firetray.PopupMenu.addWindowItem(xid);
+    icetray.PopupMenu.addWindowItem(xid);
   } catch (x) {
     if (x.name === "RangeError") // instanceof not working :-(
-      win.alert(x+"\n\nYou seem to have more than "+FIRETRAY_WINDOW_COUNT_MAX
+      win.alert(x+"\n\nYou seem to have more than "+ICETRAY_WINDOW_COUNT_MAX
                 +" windows open. This breaks FireTray and most probably "
-                +firetray.Handler.app.name+".");
+                +icetray.Handler.app.name+".");
   }
   log.debug("window "+xid+" registered");
   // NOTE: shouldn't be necessary to gtk_widget_add_events(gtkWin, gdk.GDK_ALL_EVENTS_MASK);
@@ -686,54 +686,54 @@ firetray.Handler.registerWindow = function(win) {
      // provided 'close' JS event
 
     this.windows[xid].filterWindowCb = gdk.GdkFilterFunc_t(
-      firetray.Window.filterWindow, null, FIRETRAY_CB_SENTINEL);
+      icetray.Window.filterWindow, null, ICETRAY_CB_SENTINEL);
     gdk.gdk_window_add_filter(gdkWin, this.windows[xid].filterWindowCb, null);
-    if (!firetray.Handler.appStarted) {
+    if (!icetray.Handler.appStarted) {
       this.windows[xid].startupFilterCb = gdk.GdkFilterFunc_t(
-        firetray.Window.startupFilter, null, FIRETRAY_CB_SENTINEL);
+        icetray.Window.startupFilter, null, ICETRAY_CB_SENTINEL);
       gdk.gdk_window_add_filter(gdkWin, this.windows[xid].startupFilterCb, null);
     }
 
-    firetray.Window.attachOnFocusInCallback(xid);
-    if (firetray.Handler.isChatEnabled() && firetray.Chat.initialized) {
-      firetray.Chat.attachSelectListeners(win);
+    icetray.Window.attachOnFocusInCallback(xid);
+    if (icetray.Handler.isChatEnabled() && icetray.Chat.initialized) {
+      icetray.Chat.attachSelectListeners(win);
     }
 
   } catch (x) {
     log.error(x);
-    firetray.Window.unregisterWindowByXID(xid);
+    icetray.Window.unregisterWindowByXID(xid);
     return null;
   }
 
-  log.debug("AFTER"); firetray.Handler.dumpWindows();
+  log.debug("AFTER"); icetray.Handler.dumpWindows();
   return xid;
 };
 
-firetray.Handler.unregisterWindow = function(win) {
+icetray.Handler.unregisterWindow = function(win) {
   log.debug("unregister window");
-  let xid = firetray.Window.getRegisteredWinIdFromChromeWindow(win);
-  return firetray.Window.unregisterWindowByXID(xid);
+  let xid = icetray.Window.getRegisteredWinIdFromChromeWindow(win);
+  return icetray.Window.unregisterWindowByXID(xid);
 };
 
-firetray.Handler.showWindow = firetray.Window.show;
-firetray.Handler.hideWindow = firetray.Window.hide;
+icetray.Handler.showWindow = icetray.Window.show;
+icetray.Handler.hideWindow = icetray.Window.hide;
 
-firetray.Handler.showAllWindowsAndActivate = firetray.Window.showAllWindowsAndActivate;
+icetray.Handler.showAllWindowsAndActivate = icetray.Window.showAllWindowsAndActivate;
 
 /* NOTE: gtk_window_is_active() not reliable, and _NET_ACTIVE_WINDOW may not
    always be set before 'focus-in-event' (gnome-shell/mutter 3.4.1). */
-firetray.Handler.getActiveWindow = function() {
+icetray.Handler.getActiveWindow = function() {
   let gdkActiveWin = gdk.gdk_screen_get_active_window(gdk.gdk_screen_get_default()); // inspects _NET_ACTIVE_WINDOW
   log.debug("gdkActiveWin="+gdkActiveWin);
-  if (firetray.js.strEquals(gdkActiveWin, 'GdkWindow.ptr(ctypes.UInt64("0x0"))'))
+  if (icetray.js.strEquals(gdkActiveWin, 'GdkWindow.ptr(ctypes.UInt64("0x0"))'))
     return null;
-  let activeWin = firetray.Window.getXIDFromGdkWindow(gdkActiveWin);
+  let activeWin = icetray.Window.getXIDFromGdkWindow(gdkActiveWin);
   log.debug("ACTIVE_WINDOW="+activeWin);
   return activeWin;
 };
 
-firetray.Handler.windowGetAttention = function(winId) {
-  firetray.Window.setUrgency(winId, true);
+icetray.Handler.windowGetAttention = function(winId) {
+  icetray.Window.setUrgency(winId, true);
 };
 
 
@@ -744,7 +744,7 @@ firetray.Handler.windowGetAttention = function(winId) {
  * Xlib without opening one... :-(
  */
 x11.init = function() {
-  if (!firetray.js.isEmpty(this.current))
+  if (!icetray.js.isEmpty(this.current))
     return true; // init only once
 
   this.current = {};

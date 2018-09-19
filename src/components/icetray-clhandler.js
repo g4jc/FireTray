@@ -5,19 +5,19 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://firetray/logging.jsm");
-Cu.import("resource://firetray/FiretrayHandler.jsm");
+Cu.import("resource://icetray/logging.jsm");
+Cu.import("resource://icetray/IcetrayHandler.jsm");
 
-let log = firetray.Logging.getLogger("firetray.clhandler");
+let log = icetray.Logging.getLogger("icetray.clhandler");
 
-function firetayCommandLineHandler() {}
-firetayCommandLineHandler.prototype = {
-  classDescription: "firetayCommandLineHandler",
+function icetrayCommandLineHandler() {}
+icetrayCommandLineHandler.prototype = {
+  classDescription: "icetrayCommandLineHandler",
   classID: Components.ID('{a9c9cc52-4d6c-45c2-a73f-0be1bd60aaa6}'),
-  contractID: "@mozilla.org/commandlinehandler/general-startup;1?type=firetray",
+  contractID: "@mozilla.org/commandlinehandler/general-startup;1?type=icetray",
   _xpcom_categories: [{
     category: "command-line-handler",
-    entry: "m-firetray"
+    entry: "m-icetray"
   }],
 
   QueryInterface: XPCOMUtils.generateQI([
@@ -34,7 +34,7 @@ firetayCommandLineHandler.prototype = {
     }
 
     function checkAppStarted() {
-      if (!firetray.Handler.appStarted) {
+      if (!icetray.Handler.appStarted) {
         let msg = "application not started: doing nothing.";
         log.warn(msg);
         throw new RuntimeException(msg);
@@ -43,16 +43,16 @@ firetayCommandLineHandler.prototype = {
 
     try {
 
-      if (cmdLine.handleFlag("firetrayShowHide", false)) {
+      if (cmdLine.handleFlag("icetrayShowHide", false)) {
         checkAppStarted();
-        log.debug("*** CmdLine call -firetrayShowHide ***");
-        firetray.Handler.showHideAllWindows();
+        log.debug("*** CmdLine call -icetrayShowHide ***");
+        icetray.Handler.showHideAllWindows();
         cmdLine.preventDefault = true;
 
-      } else if (cmdLine.handleFlag("firetrayPresent", false)) {
+      } else if (cmdLine.handleFlag("icetrayPresent", false)) {
         checkAppStarted();
-        log.debug("*** CmdLine call -firetrayPresent ***");
-        firetray.Handler.showAllWindowsAndActivate();
+        log.debug("*** CmdLine call -icetrayPresent ***");
+        icetray.Handler.showAllWindowsAndActivate();
         cmdLine.preventDefault = true;
       }
 
@@ -71,4 +71,4 @@ firetayCommandLineHandler.prototype = {
   helpInfo: "  -showHide            Minimize to or restore from system tray\n" // https://bugzilla.mozilla.org/show_bug.cgi?id=510882
 };
 
-var NSGetFactory = XPCOMUtils.generateNSGetFactory([firetayCommandLineHandler]);
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([icetrayCommandLineHandler]);

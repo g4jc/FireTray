@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     gtk_widget_set_size_request (window, 200, -1);
     
     //set try icon file
-    GtkStatusIcon *trayIcon  = gtk_status_icon_new_from_file ("firefox32.png");
+    GtkStatusIcon *trayIcon  = gtk_status_icon_new_from_file ("iceweasel-uxp32.png");
     //set popup menu for tray icon
     GtkWidget *menu, *menuItemView, *menuItemExit;
     menu = gtk_menu_new();

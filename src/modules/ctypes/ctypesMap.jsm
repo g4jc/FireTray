@@ -1,24 +1,24 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = [ "ctypesMap", "FIRETRAY_WINDOW_COUNT_MAX", "DeleteError" ];
+var EXPORTED_SYMBOLS = [ "ctypesMap", "ICETRAY_WINDOW_COUNT_MAX", "DeleteError" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/logging.jsm");
-Cu.import("resource://firetray/commons.js");
+Cu.import("resource://icetray/logging.jsm");
+Cu.import("resource://icetray/commons.js");
 
-const FIRETRAY_WINDOW_COUNT_MAX = 64;
+const ICETRAY_WINDOW_COUNT_MAX = 64;
 
-let log = firetray.Logging.getLogger("firetray.ctypesMap");
+let log = icetray.Logging.getLogger("icetray.ctypesMap");
 
 /**
  * basic Hash mapping a key (of any type) to a cell in a ctypes array
  */
 function ctypesMap(t) {
-  this.array = ctypes.ArrayType(t)(FIRETRAY_WINDOW_COUNT_MAX);
+  this.array = ctypes.ArrayType(t)(ICETRAY_WINDOW_COUNT_MAX);
   this.indexLast = -1;
   this.freedCells = [];         // indices of freed cells
   this.count = 0;               // count of actually stored things
@@ -50,7 +50,7 @@ ctypesMap.prototype.insert = function(key, item) {
 
   } else {
     let indexNext = this.indexLast + 1;
-    if (indexNext >= FIRETRAY_WINDOW_COUNT_MAX)
+    if (indexNext >= ICETRAY_WINDOW_COUNT_MAX)
       throw new RangeError('Array overflow');
 
     this.indexLast = indexNext;

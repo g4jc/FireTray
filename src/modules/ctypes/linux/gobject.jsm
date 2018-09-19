@@ -12,7 +12,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Firetray
+ * The Original Code is Icetray
  *
  * The Initial Developer of the Original Code is
  * Mozilla Messaging, Ltd.
@@ -47,8 +47,8 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/ctypes/ctypes-utils.jsm");
-Cu.import("resource://firetray/ctypes/linux/glib.jsm");
+Cu.import("resource://icetray/ctypes/ctypes-utils.jsm");
+Cu.import("resource://icetray/ctypes/linux/glib.jsm");
 
 function gobject_defines(lib) {
 

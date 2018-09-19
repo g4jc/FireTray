@@ -10,11 +10,11 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/ctypes/ctypes-utils.jsm");
-Cu.import("resource://firetray/ctypes/linux/cairo.jsm");
-Cu.import("resource://firetray/ctypes/linux/gobject.jsm");
-Cu.import("resource://firetray/ctypes/linux/x11.jsm");
-Cu.import("resource://firetray/ctypes/linux/gdk23.jsm");
+Cu.import("resource://icetray/ctypes/ctypes-utils.jsm");
+Cu.import("resource://icetray/ctypes/linux/cairo.jsm");
+Cu.import("resource://icetray/ctypes/linux/gobject.jsm");
+Cu.import("resource://icetray/ctypes/linux/x11.jsm");
+Cu.import("resource://icetray/ctypes/linux/gdk23.jsm");
 
 function gdk_defines(lib) {
 

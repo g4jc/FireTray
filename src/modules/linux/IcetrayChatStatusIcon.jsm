@@ -1,6 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = [ "firetray" ];
+var EXPORTED_SYMBOLS = [ "icetray" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -9,20 +9,20 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/commons.js"); // first for Handler.app !
-Cu.import("resource://firetray/ctypes/ctypesMap.jsm");
-Cu.import("resource://firetray/ctypes/linux/gio.jsm");
-Cu.import("resource://firetray/ctypes/linux/gobject.jsm");
-Cu.import("resource://firetray/ctypes/linux/"+firetray.Handler.app.widgetTk+"/gdk.jsm");
-Cu.import("resource://firetray/ctypes/linux/"+firetray.Handler.app.widgetTk+"/gtk.jsm");
-Cu.import("resource://firetray/linux/FiretrayGtkIcons.jsm");
-Cu.import("resource://firetray/linux/FiretrayWindow.jsm");
-firetray.Handler.subscribeLibsForClosing([gdk, gio, gobject, gtk]);
+Cu.import("resource://icetray/commons.js"); // first for Handler.app !
+Cu.import("resource://icetray/ctypes/ctypesMap.jsm");
+Cu.import("resource://icetray/ctypes/linux/gio.jsm");
+Cu.import("resource://icetray/ctypes/linux/gobject.jsm");
+Cu.import("resource://icetray/ctypes/linux/"+icetray.Handler.app.widgetTk+"/gdk.jsm");
+Cu.import("resource://icetray/ctypes/linux/"+icetray.Handler.app.widgetTk+"/gtk.jsm");
+Cu.import("resource://icetray/linux/IcetrayGtkIcons.jsm");
+Cu.import("resource://icetray/linux/IcetrayWindow.jsm");
+icetray.Handler.subscribeLibsForClosing([gdk, gio, gobject, gtk]);
 
-if ("undefined" == typeof(firetray.Handler))
-  log.error("This module MUST be imported from/after FiretrayHandler !");
+if ("undefined" == typeof(icetray.Handler))
+  log.error("This module MUST be imported from/after IcetrayHandler !");
 
-let log = firetray.Logging.getLogger("firetray.ChatStatusIcon");
+let log = icetray.Logging.getLogger("icetray.ChatStatusIcon");
 
 const ALPHA_STEP                       = 5;
 const ALPHA_STEP_SLEEP_MILLISECONDS    = 10;
@@ -30,16 +30,16 @@ const FADE_OVER_SLEEP_MILLISECONDS     = 500;
 const BLINK_TOGGLE_PERIOD_MILLISECONDS = 500;
 
 
-firetray.ChatStatusIcon = {
+icetray.ChatStatusIcon = {
   GTK_THEME_ICON_PATH: null,
 
   initialized: false,
   trayIcon: null,
   themedIcons: (function(){let o = {};
-    o[FIRETRAY_IM_STATUS_AVAILABLE] = null;
-    o[FIRETRAY_IM_STATUS_AWAY] = null;
-    o[FIRETRAY_IM_STATUS_BUSY] = null;
-    o[FIRETRAY_IM_STATUS_OFFLINE] = null;
+    o[ICETRAY_IM_STATUS_AVAILABLE] = null;
+    o[ICETRAY_IM_STATUS_AWAY] = null;
+    o[ICETRAY_IM_STATUS_BUSY] = null;
+    o[ICETRAY_IM_STATUS_OFFLINE] = null;
     return o;
   })(),
   themedIconNameCurrent: null,
@@ -47,15 +47,15 @@ firetray.ChatStatusIcon = {
   events: {},
   generators: {},
   pixBuffer: {},
-  get isBlinking () {return (firetray.Chat.convsToAcknowledge.length() > 0);},
+  get isBlinking () {return (icetray.Chat.convsToAcknowledge.length() > 0);},
 
   init: function() {
-    if (!firetray.Handler.appHasChat) throw "ChatStatusIcon for chat app only";
+    if (!icetray.Handler.appHasChat) throw "ChatStatusIcon for chat app only";
 
     this.trayIcon = gtk.gtk_status_icon_new();
-    firetray.GtkIcons.init();
+    icetray.GtkIcons.init();
     this.loadThemedIcons();
-    this.setIconImage(this.themedIconNameCurrent || FIRETRAY_IM_STATUS_OFFLINE); // updated in Chat anyway
+    this.setIconImage(this.themedIconNameCurrent || ICETRAY_IM_STATUS_OFFLINE); // updated in Chat anyway
     this.setIconTooltipDefault();
     this.initTimers();
 
@@ -66,7 +66,7 @@ firetray.ChatStatusIcon = {
   shutdown: function() {
     this.destroyTimers();
     this.destroyIcons();
-    firetray.GtkIcons.shutdown();
+    icetray.GtkIcons.shutdown();
     this.initialized = false;
   },
 
@@ -84,16 +84,16 @@ firetray.ChatStatusIcon = {
   },
 
   setIconImageFromGIcon: function(gicon) {
-    if (!firetray.ChatStatusIcon.trayIcon || !gicon)
+    if (!icetray.ChatStatusIcon.trayIcon || !gicon)
       log.error("Icon missing");
-    gtk.gtk_status_icon_set_from_gicon(firetray.ChatStatusIcon.trayIcon, gicon);
+    gtk.gtk_status_icon_set_from_gicon(icetray.ChatStatusIcon.trayIcon, gicon);
   },
 
   setIconImage: function(name) {
     this.themedIconNameCurrent = name;
 
-    let blinkStyle = firetray.Utils.prefService.getIntPref("chat_icon_blink_style");
-    if (blinkStyle === FIRETRAY_CHAT_ICON_BLINK_STYLE_FADE &&
+    let blinkStyle = icetray.Utils.prefService.getIntPref("chat_icon_blink_style");
+    if (blinkStyle === ICETRAY_CHAT_ICON_BLINK_STYLE_FADE &&
         this.isBlinking) {
       this.events['icon-changed'] = true;
       return;
@@ -124,9 +124,9 @@ firetray.ChatStatusIcon = {
 
     // get pixbuf
     let arry = gobject.gchar.ptr.array()(2);
-    arry[0] = gobject.gchar.array()(firetray.ChatStatusIcon.themedIconNameCurrent);
+    arry[0] = gobject.gchar.array()(icetray.ChatStatusIcon.themedIconNameCurrent);
     arry[1] = null;
-    log.debug("icon name="+firetray.ChatStatusIcon.themedIconNameCurrent+", theme="+icon_theme+", arry="+arry);
+    log.debug("icon name="+icetray.ChatStatusIcon.themedIconNameCurrent+", theme="+icon_theme+", arry="+arry);
     let icon_info = gtk.gtk_icon_theme_choose_icon(icon_theme, arry, 22, gtk.GTK_ICON_LOOKUP_FORCE_SIZE);
 
     // create pixbuf
@@ -182,13 +182,13 @@ if (gtk.gtk_get_major_version() == 3 && gtk.gtk_get_minor_version() >= 8) { // g
   },
 
   fadeGenerator: function() {
-    let pixbuf = firetray.ChatStatusIcon.pixBuffer;
+    let pixbuf = icetray.ChatStatusIcon.pixBuffer;
 
     for (let a=255; a>0; a-=ALPHA_STEP) {
       for(let i=3; i<pixbuf.length; i+=pixbuf.n_channels)
         if (pixbuf.pixels.contents[i]-ALPHA_STEP>0)
           pixbuf.pixels.contents[i] -= ALPHA_STEP;
-      gtk.gtk_status_icon_set_from_pixbuf(firetray.ChatStatusIcon.trayIcon, pixbuf.pixbuf);
+      gtk.gtk_status_icon_set_from_pixbuf(icetray.ChatStatusIcon.trayIcon, pixbuf.pixbuf);
       yield true;
     }
 
@@ -197,48 +197,48 @@ if (gtk.gtk_get_major_version() == 3 && gtk.gtk_get_minor_version() >= 8) { // g
         if (pixbuf.pixels.contents[i]+ALPHA_STEP<=pixbuf.alpha_bak[(i-3)/pixbuf.n_channels]) {
           pixbuf.pixels.contents[i] += ALPHA_STEP;
         }
-      gtk.gtk_status_icon_set_from_pixbuf(firetray.ChatStatusIcon.trayIcon, pixbuf.pixbuf);
+      gtk.gtk_status_icon_set_from_pixbuf(icetray.ChatStatusIcon.trayIcon, pixbuf.pixbuf);
       yield true;
     }
   },
 
   fadeStep: function() {
     try {
-      if (firetray.ChatStatusIcon.generators['fade'].next())
-        firetray.ChatStatusIcon.timers['fade-step'].initWithCallback(
-          { notify: firetray.ChatStatusIcon.fadeStep },
+      if (icetray.ChatStatusIcon.generators['fade'].next())
+        icetray.ChatStatusIcon.timers['fade-step'].initWithCallback(
+          { notify: icetray.ChatStatusIcon.fadeStep },
           ALPHA_STEP_SLEEP_MILLISECONDS, Ci.nsITimer.TYPE_ONE_SHOT);
 
     } catch (e if e instanceof StopIteration) {
 
-      if (firetray.ChatStatusIcon.events['stop-fade']) {
+      if (icetray.ChatStatusIcon.events['stop-fade']) {
         log.debug("stop-fade");
-        delete firetray.ChatStatusIcon.events['stop-fade'];
-        delete firetray.ChatStatusIcon.generators['fade'];
-        firetray.ChatStatusIcon.setIconImage(firetray.ChatStatusIcon.themedIconNameCurrent);
-        firetray.ChatStatusIcon.dropPixBuf();
+        delete icetray.ChatStatusIcon.events['stop-fade'];
+        delete icetray.ChatStatusIcon.generators['fade'];
+        icetray.ChatStatusIcon.setIconImage(icetray.ChatStatusIcon.themedIconNameCurrent);
+        icetray.ChatStatusIcon.dropPixBuf();
         return;
       }
 
-      if (firetray.ChatStatusIcon.events['icon-changed']) {
-        delete firetray.ChatStatusIcon.events['icon-changed'];
-        firetray.ChatStatusIcon.dropPixBuf();
-        firetray.ChatStatusIcon.buildPixBuf();
-        firetray.ChatStatusIcon.timers['fade-loop'].initWithCallback(
-          { notify: firetray.ChatStatusIcon.fadeLoop },
+      if (icetray.ChatStatusIcon.events['icon-changed']) {
+        delete icetray.ChatStatusIcon.events['icon-changed'];
+        icetray.ChatStatusIcon.dropPixBuf();
+        icetray.ChatStatusIcon.buildPixBuf();
+        icetray.ChatStatusIcon.timers['fade-loop'].initWithCallback(
+          { notify: icetray.ChatStatusIcon.fadeLoop },
           FADE_OVER_SLEEP_MILLISECONDS, Ci.nsITimer.TYPE_ONE_SHOT);
 
       } else {
-        firetray.ChatStatusIcon.timers['fade-loop'].initWithCallback(
-          { notify: firetray.ChatStatusIcon.fadeLoop },
+        icetray.ChatStatusIcon.timers['fade-loop'].initWithCallback(
+          { notify: icetray.ChatStatusIcon.fadeLoop },
           FADE_OVER_SLEEP_MILLISECONDS, Ci.nsITimer.TYPE_ONE_SHOT);
       }
     };
   },
 
   fadeLoop: function() {
-    firetray.ChatStatusIcon.generators['fade'] = firetray.ChatStatusIcon.fadeGenerator();
-    firetray.ChatStatusIcon.fadeStep();
+    icetray.ChatStatusIcon.generators['fade'] = icetray.ChatStatusIcon.fadeGenerator();
+    icetray.ChatStatusIcon.fadeStep();
   },
 
   startFading: function() {
@@ -254,13 +254,13 @@ if (gtk.gtk_get_major_version() == 3 && gtk.gtk_get_minor_version() >= 8) { // g
 
   startBlinking: function() { // gtk_status_icon_set_blinking() deprecated
     this.on = true;
-    firetray.ChatStatusIcon.timers['blink'].initWithCallback({
+    icetray.ChatStatusIcon.timers['blink'].initWithCallback({
       notify: function() {
-        if (firetray.ChatStatusIcon.on)
-          firetray.ChatStatusIcon.setIconVoid();
+        if (icetray.ChatStatusIcon.on)
+          icetray.ChatStatusIcon.setIconVoid();
         else
-          firetray.ChatStatusIcon.setIconImage(firetray.ChatStatusIcon.themedIconNameCurrent);
-        firetray.ChatStatusIcon.on = !firetray.ChatStatusIcon.on;
+          icetray.ChatStatusIcon.setIconImage(icetray.ChatStatusIcon.themedIconNameCurrent);
+        icetray.ChatStatusIcon.on = !icetray.ChatStatusIcon.on;
       }
     }, BLINK_TOGGLE_PERIOD_MILLISECONDS, Ci.nsITimer.TYPE_REPEATING_SLACK);
   },
@@ -268,17 +268,17 @@ if (gtk.gtk_get_major_version() == 3 && gtk.gtk_get_minor_version() >= 8) { // g
   stopBlinking: function() {
     log.debug("stopBlinking");
     this.timers['blink'].cancel();
-    this.setIconImage(firetray.ChatStatusIcon.themedIconNameCurrent);
+    this.setIconImage(icetray.ChatStatusIcon.themedIconNameCurrent);
     this.on = false;
   },
 
   toggleBlinkStyle: function(blinkStyle) {
     switch (blinkStyle) {
-    case FIRETRAY_CHAT_ICON_BLINK_STYLE_NORMAL:
+    case ICETRAY_CHAT_ICON_BLINK_STYLE_NORMAL:
       this.stopFading();
       this.startBlinking();
       break;
-    case FIRETRAY_CHAT_ICON_BLINK_STYLE_FADE:
+    case ICETRAY_CHAT_ICON_BLINK_STYLE_FADE:
       this.stopBlinking();
       this.startFading();
       break;
@@ -288,7 +288,7 @@ if (gtk.gtk_get_major_version() == 3 && gtk.gtk_get_minor_version() >= 8) { // g
   },
 
   setUrgency: function(xid, urgent) {
-    gtk.gtk_window_set_urgency_hint(firetray.Handler.gtkWindows.get(xid), urgent);
+    gtk.gtk_window_set_urgency_hint(icetray.Handler.gtkWindows.get(xid), urgent);
   },
 
   setIconTooltip: function(txt) {
@@ -298,9 +298,9 @@ if (gtk.gtk_get_major_version() == 3 && gtk.gtk_get_minor_version() >= 8) { // g
   },
 
   setIconTooltipDefault: function() {
-    this.setIconTooltip(firetray.Handler.app.name+" Chat");
+    this.setIconTooltip(icetray.Handler.app.name+" Chat");
   }
 
   // TODO: onclick/activate -> chatHandler.showCurrentConversation()
 
-}; // firetray.ChatStatusIcon
+}; // icetray.ChatStatusIcon

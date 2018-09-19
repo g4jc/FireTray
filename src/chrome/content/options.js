@@ -4,8 +4,8 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.import("resource://firetray/FiretrayHandler.jsm");
-Cu.import("resource://firetray/commons.js");
+Cu.import("resource://icetray/IcetrayHandler.jsm");
+Cu.import("resource://icetray/commons.js");
 
 const TREEROW_ACCOUNT_OR_SERVER_TYPE_NAME     = 0;
 const TREEROW_ACCOUNT_OR_SERVER_TYPE_EXCLUDED = 1;
@@ -15,52 +15,52 @@ const TREELEVEL_EXCLUDED_ACCOUNTS = 1;
 
 const PREF_DEFAULT_PANE = "pref-pane-windows";
 
-let log = firetray.Logging.getLogger("firetray.UIOptions");
+let log = icetray.Logging.getLogger("icetray.UIOptions");
 
-var firetrayUIOptions = {
+var icetrayUIOptions = {
   strings: null,
   prefwindow: null,
   listeners: {},
 
   onLoad: function(e) {
-    log.debug("FULL FEATURED="+firetray.Handler.support['full_feat']);
-    this.strings = document.getElementById("firetray-options-strings");
-    this.prefwindow = document.getElementById("firetray-preferences");
+    log.debug("FULL FEATURED="+icetray.Handler.support['full_feat']);
+    this.strings = document.getElementById("icetray-options-strings");
+    this.prefwindow = document.getElementById("icetray-preferences");
     if (!this.prefwindow)
       log.error("pref window not found");
 
     this.updateWindowAndIconOptions();
     this.updateScrollOptions();
     this.initAppIconType();
-    if (firetray.Handler.support['winnt']) {
+    if (icetray.Handler.support['winnt']) {
       this.hideUnsupportedOptions([
         'ui_show_activates', 'ui_remember_desktop', 'app_icon_default',
         'ui_show_icon_on_hide', 'ui_scroll_hides', 'ui_radiogroup_scroll',
         'ui_scroll_hides', 'ui_middle_click', 'newmail_icon_names'
       ]);
-    } else if (firetray.AppIndicator) {
+    } else if (icetray.AppIndicator) {
       this.hideUnsupportedOptions([
         'app_icon_default', 'ui_mail_notification_unread_count',
         'newmail_icon_names'
       ]);
     } else {
       this.initAppIconNames();
-      if (firetray.Handler.inMailApp)
+      if (icetray.Handler.inMailApp)
         this.initNewMailIconNames();
     }
 
-    if (firetray.Handler.inMailApp) {
+    if (icetray.Handler.inMailApp) {
       Cu.import("resource:///modules/mailServices.js");
-      Cu.import("resource://firetray/FiretrayMessaging.jsm");
+      Cu.import("resource://icetray/IcetrayMessaging.jsm");
       this.initMailControls();
     } else {
       this.removePrefPane("pref-pane-mail");
     }
 
-    if (firetray.Handler.isChatProvided() &&
-        firetray.Handler.support['chat'] &&
-        !firetray.AppIndicator) {
-      Cu.import("resource://firetray/"+firetray.Handler.app.OS+"/FiretrayChat.jsm");
+    if (icetray.Handler.isChatProvided() &&
+        icetray.Handler.support['chat'] &&
+        !icetray.AppIndicator) {
+      Cu.import("resource://icetray/"+icetray.Handler.app.OS+"/IcetrayChat.jsm");
       this.initChatControls();
     } else {
       this.removePrefPane("pref-pane-chat");
@@ -70,7 +70,7 @@ var firetrayUIOptions = {
   },
 
   onQuit: function(e) {
-    if (firetray.Handler.inMailApp) {
+    if (icetray.Handler.inMailApp) {
       this.removeListeners();
       this.removeMailAccountsObserver();
     }
@@ -148,7 +148,7 @@ var firetrayUIOptions = {
   },
 
   disableElementsRecursive: function(group, disableval) {
-    let descendants = firetray.Utils.XPath(group, 'descendant::*');
+    let descendants = icetray.Utils.XPath(group, 'descendant::*');
     try {
       for (let i=0, len=descendants.length; i<len ; ++i)
         descendants[i].disabled = disableval;
@@ -172,27 +172,27 @@ var firetrayUIOptions = {
 
   initAppIconType: function() {
     document.getElementById("ui_app_icon_type_themed").value =
-      FIRETRAY_APPLICATION_ICON_TYPE_THEMED;
+      ICETRAY_APPLICATION_ICON_TYPE_THEMED;
     document.getElementById("ui_app_icon_type_custom").value =
-      FIRETRAY_APPLICATION_ICON_TYPE_CUSTOM;
+      ICETRAY_APPLICATION_ICON_TYPE_CUSTOM;
 
-    let prefAppIconType = firetray.Utils.prefService.getIntPref("app_icon_type");
+    let prefAppIconType = icetray.Utils.prefService.getIntPref("app_icon_type");
     document.getElementById("ui_app_icon_type").selectedIndex = prefAppIconType;
 
     this.disableIconTypeMaybe(prefAppIconType);
   },
 
   initAppIconNames: function() {
-    this.initIconNames(firetray.StatusIcon.prefAppIconNames,
-      "app_icon_type_themed_name", firetray.StatusIcon.defaultAppIconName);
+    this.initIconNames(icetray.StatusIcon.prefAppIconNames,
+      "app_icon_type_themed_name", icetray.StatusIcon.defaultAppIconName);
   },
   initNewMailIconNames: function() {
     this.initIconNames("new_mail_icon_names",
-      "radio_mail_notification_newmail_icon_name", firetray.StatusIcon.defaultNewMailIconName);
+      "radio_mail_notification_newmail_icon_name", icetray.StatusIcon.defaultNewMailIconName);
   },
 
   initIconNames: function(prefIconNames, uiIconNameId, defaultIconName) {
-    let appIconNames = firetray.Utils.getArrayPref(prefIconNames);
+    let appIconNames = icetray.Utils.getArrayPref(prefIconNames);
     log.debug("appIconNames="+appIconNames);
     let len = appIconNames.length;
     if (len>2)
@@ -206,7 +206,7 @@ var firetrayUIOptions = {
   },
 
   updateAppIconNames: function(textbox) {
-    this.updateIconNames(firetray.StatusIcon.prefAppIconNames, "app_icon_type_themed_name");
+    this.updateIconNames(icetray.StatusIcon.prefAppIconNames, "app_icon_type_themed_name");
   },
   updateNewMailIconNames: function(textbox) {
     this.updateIconNames("new_mail_icon_names", "radio_mail_notification_newmail_icon_name");
@@ -221,19 +221,19 @@ var firetrayUIOptions = {
       if (val) iconNames.push(val);
     }
     log.debug("iconNames="+iconNames);
-    firetray.Utils.setArrayPref(prefIconNames, iconNames); // FIXME: should be a <preference>
+    icetray.Utils.setArrayPref(prefIconNames, iconNames); // FIXME: should be a <preference>
   },
 
   disableIconTypeMaybe: function(appIconType) {
-    if (firetray.Handler.support['winnt']) {
+    if (icetray.Handler.support['winnt']) {
       let appIconDefaultGroup = document.getElementById("app_icon_default");
       this.disableNChildren(appIconDefaultGroup, 2,
-        (appIconType !== FIRETRAY_APPLICATION_ICON_TYPE_THEMED));
+        (appIconType !== ICETRAY_APPLICATION_ICON_TYPE_THEMED));
     }
 
     let appIconCustomGroup = document.getElementById("app_icon_custom");
     this.disableChildren(appIconCustomGroup,
-      (appIconType !== FIRETRAY_APPLICATION_ICON_TYPE_CUSTOM));
+      (appIconType !== ICETRAY_APPLICATION_ICON_TYPE_CUSTOM));
   },
 
   initMailControls: function() {
@@ -244,55 +244,55 @@ var firetrayUIOptions = {
     this.initMessageCountSettings();
     this.initNotificationSettings();
 
-    this.toggleNotifications(firetray.Utils.prefService.getBoolPref("mail_notification_enabled"));
+    this.toggleNotifications(icetray.Utils.prefService.getBoolPref("mail_notification_enabled"));
   },
 
   initChatControls: function() {
     this.initChatBlinkSettings();
-    this.toggleChatIcon(firetray.Utils.prefService.getBoolPref("chat_icon_enable"));
+    this.toggleChatIcon(icetray.Utils.prefService.getBoolPref("chat_icon_enable"));
   },
 
   initNotificationSettings: function() {
     document.getElementById("ui_radio_mail_notification_unread_count").value =
-      FIRETRAY_NOTIFICATION_MESSAGE_COUNT;
+      ICETRAY_NOTIFICATION_MESSAGE_COUNT;
     document.getElementById("ui_radio_mail_notification_newmail_icon").value =
-      FIRETRAY_NOTIFICATION_NEWMAIL_ICON;
+      ICETRAY_NOTIFICATION_NEWMAIL_ICON;
     document.getElementById("ui_radio_mail_notification_mail_icon_custom").value =
-      FIRETRAY_NOTIFICATION_CUSTOM_ICON;
+      ICETRAY_NOTIFICATION_CUSTOM_ICON;
 
     document.getElementById("ui_mail_notification_enabled").checked =
-      (firetray.Utils.prefService.getBoolPref("mail_notification_enabled"));
+      (icetray.Utils.prefService.getBoolPref("mail_notification_enabled"));
 
     let mailNotifyRadio = document.getElementById("ui_radiogroup_mail_notification");
-    let prefMailNotificationType = firetray.Utils.prefService.getIntPref("mail_notification_type");
+    let prefMailNotificationType = icetray.Utils.prefService.getIntPref("mail_notification_type");
     mailNotifyRadio.selectedIndex = this.radioGetIndexByValue(mailNotifyRadio, prefMailNotificationType);
     // this.disableNotificationMaybe(prefMailNotificationType); // done in toggleNotifications()
     /* We need to ensure assigning selectedIndex in disableMessageCountMaybe()
      does change the corresponding preference. */
-    let listener = {evt:'select', fn:firetrayUIOptions.userChangedValue, cap:true};
+    let listener = {evt:'select', fn:icetrayUIOptions.userChangedValue, cap:true};
     this.addListener(mailNotifyRadio, listener);
   },
 
   initMessageCountSettings: function() {
     document.getElementById("ui_message_count_type_unread").value =
-      FIRETRAY_MESSAGE_COUNT_TYPE_UNREAD;
+      ICETRAY_MESSAGE_COUNT_TYPE_UNREAD;
     document.getElementById("ui_message_count_type_new").value =
-      FIRETRAY_MESSAGE_COUNT_TYPE_NEW;
+      ICETRAY_MESSAGE_COUNT_TYPE_NEW;
 
     let radioMessageCountType = document.getElementById("ui_message_count_type");
-    let prefMsgCountType = firetray.Utils.prefService.getIntPref("message_count_type");
+    let prefMsgCountType = icetray.Utils.prefService.getIntPref("message_count_type");
     radioMessageCountType.selectedIndex = this.radioGetIndexByValue(radioMessageCountType, prefMsgCountType);
     // this.disableMessageCountMaybe(prefMsgCountType); // done in toggleNotifications()
   },
 
   initChatBlinkSettings: function() {
     document.getElementById("ui_chat_icon_blink_style_normal").value =
-      FIRETRAY_CHAT_ICON_BLINK_STYLE_NORMAL;
+      ICETRAY_CHAT_ICON_BLINK_STYLE_NORMAL;
     document.getElementById("ui_chat_icon_blink_style_fade").value =
-      FIRETRAY_CHAT_ICON_BLINK_STYLE_FADE;
+      ICETRAY_CHAT_ICON_BLINK_STYLE_FADE;
 
     let blinkStyle = document.getElementById("ui_chat_icon_blink_style");
-    let prefBlinkStyle = firetray.Utils.prefService.getIntPref("chat_icon_blink_style");
+    let prefBlinkStyle = icetray.Utils.prefService.getIntPref("chat_icon_blink_style");
     blinkStyle.selectedIndex = this.radioGetIndexByValue(blinkStyle, prefBlinkStyle);
   },
 
@@ -328,31 +328,31 @@ var firetrayUIOptions = {
 
     let iconTextColor = document.getElementById("icon_text_color");
     this.disableChildren(iconTextColor,
-      (notificationSetting !== FIRETRAY_NOTIFICATION_MESSAGE_COUNT));
+      (notificationSetting !== ICETRAY_NOTIFICATION_MESSAGE_COUNT));
 
-    if (firetray.Handler.support['winnt']) {
+    if (icetray.Handler.support['winnt']) {
       let newMailIconNames = document.getElementById("newmail_icon_names");
       this.disableNChildren(newMailIconNames, 2,
-        (notificationSetting !== FIRETRAY_NOTIFICATION_NEWMAIL_ICON));
+        (notificationSetting !== ICETRAY_NOTIFICATION_NEWMAIL_ICON));
     }
 
     let customIconGroup = document.getElementById("mail_icon_custom");
     this.disableChildren(customIconGroup,
-      (notificationSetting !== FIRETRAY_NOTIFICATION_CUSTOM_ICON));
+      (notificationSetting !== ICETRAY_NOTIFICATION_CUSTOM_ICON));
   },
 
   disableMessageCountMaybe: function(msgCountType) {
     log.debug("disableMessageCountMaybe: "+msgCountType);
-    let msgCountTypeIsNewMessages = (msgCountType === FIRETRAY_MESSAGE_COUNT_TYPE_NEW);
+    let msgCountTypeIsNewMessages = (msgCountType === ICETRAY_MESSAGE_COUNT_TYPE_NEW);
 
     let notificationUnreadCount = document.getElementById("ui_mail_notification_unread_count");
     this.disableElementsRecursive(notificationUnreadCount, msgCountTypeIsNewMessages);
 
     let mailNotifyRadio = document.getElementById("ui_radiogroup_mail_notification");
     let mailNotificationType = +mailNotifyRadio.getItemAtIndex(mailNotifyRadio.selectedIndex).value;
-    if (msgCountTypeIsNewMessages && (mailNotificationType === FIRETRAY_NOTIFICATION_MESSAGE_COUNT)) {
-      mailNotifyRadio.selectedIndex = this.radioGetIndexByValue(mailNotifyRadio, FIRETRAY_NOTIFICATION_NEWMAIL_ICON);
-      if (firetray.Handler.support['winnt']) {
+    if (msgCountTypeIsNewMessages && (mailNotificationType === ICETRAY_NOTIFICATION_MESSAGE_COUNT)) {
+      mailNotifyRadio.selectedIndex = this.radioGetIndexByValue(mailNotifyRadio, ICETRAY_NOTIFICATION_NEWMAIL_ICON);
+      if (icetray.Handler.support['winnt']) {
         let newMailIconNames = document.getElementById("newmail_icon_names");
         this.disableNChildren(newMailIconNames, 2, false);
       }
@@ -364,7 +364,7 @@ var firetrayUIOptions = {
       document.getElementById("broadcaster-notification-disabled")
         .removeAttribute("disabled"); // UI update (enables!)
 
-      let prefMailNotificationType = firetray.Utils.prefService.getIntPref("mail_notification_type");
+      let prefMailNotificationType = icetray.Utils.prefService.getIntPref("mail_notification_type");
       this.disableNotificationMaybe(prefMailNotificationType);
 
       let radioMessageCountType = document.getElementById("ui_message_count_type");
@@ -383,7 +383,7 @@ var firetrayUIOptions = {
         .removeAttribute("disabled"); // UI update (enables!)
 
       this.toggleChatIconBlink(
-        firetray.Utils.prefService.getBoolPref("chat_icon_blink"));
+        icetray.Utils.prefService.getBoolPref("chat_icon_blink"));
 
     } else {
       document.getElementById("broadcaster-chat-icon-disabled")
@@ -396,12 +396,12 @@ var firetrayUIOptions = {
   },
 
   chooseAppIconFile: function() {
-    let updateIcon = firetray.Handler.setIconImageDefault.bind(firetray.Handler);
+    let updateIcon = icetray.Handler.setIconImageDefault.bind(icetray.Handler);
     this._chooseIconFile("app_icon_custom_filename", updateIcon);
   },
 
   chooseMailIconFile: function() {
-    let updateIcon = firetray.Messaging.updateIcon.bind(firetray.Messaging);
+    let updateIcon = icetray.Messaging.updateIcon.bind(icetray.Messaging);
     this._chooseIconFile("mail_icon_custom_filename", updateIcon);
   },
 
@@ -414,7 +414,7 @@ var firetrayUIOptions = {
           aResult == nsIFilePicker.returnReplace) {
         let filenameElt = document.getElementById(elementId);
         filenameElt.value = filePicker.file.path;
-        let prefpane = firetrayUIOptions.getAncestorPrefpane(filenameElt);
+        let prefpane = icetrayUIOptions.getAncestorPrefpane(filenameElt);
         prefpane.userChangedValue(filenameElt);
 
         callback.call();
@@ -422,7 +422,7 @@ var firetrayUIOptions = {
     }};
 
     filePicker.init(window, "Select Icon", nsIFilePicker.modeOpen); // FIXME: i18n
-    if (firetray.Handler.app.OS === "winnt")
+    if (icetray.Handler.app.OS === "winnt")
       filePicker.appendFilter("Icon", "*.bmp; *.ico"); // TODO: support more formats ?
     else
       filePicker.appendFilters(nsIFilePicker.filterImages);
@@ -430,7 +430,7 @@ var firetrayUIOptions = {
   },
 
   getAncestorPrefpane: function(elt) {
-    let prefpanes = firetray.Utils.XPath(elt, 'ancestor::xul:prefpane');
+    let prefpanes = icetray.Utils.XPath(elt, 'ancestor::xul:prefpane');
     if (prefpanes.length !== 1)
       throw new RangeError("not single prefpane found for '"+elt.getAttribute("id")+"'");
     return prefpanes[0];
@@ -445,7 +445,7 @@ var firetrayUIOptions = {
   populateExcludedFoldersList: function() {
     let excludedFoldersList = document.getElementById('excluded_folders_list');
 
-    let prefExcludedFoldersFlags = firetray.Utils.prefService
+    let prefExcludedFoldersFlags = icetray.Utils.prefService
       .getIntPref("excluded_folders_flags");
     log.debug("prefExcludedFoldersFlags="+prefExcludedFoldersFlags.toString(16));
     for (let folderType in FLDRS_UNINTERESTING) {
@@ -463,7 +463,7 @@ var firetrayUIOptions = {
 
     // ...so we add onselect handler after the listbox is populated. 'select'
     // also fired on unselect.
-    let listener = {evt:'select', fn:firetrayUIOptions.userChangedValue, cap:true};
+    let listener = {evt:'select', fn:icetrayUIOptions.userChangedValue, cap:true};
     this.addListener(excludedFoldersList, listener);
   },
 
@@ -521,10 +521,10 @@ var firetrayUIOptions = {
   populateTreeAccountsOrServerTypes: function() {
     let that = this;
 
-    let mailAccounts = firetray.Utils.getObjPref("mail_accounts");
+    let mailAccounts = icetray.Utils.getObjPref("mail_accounts");
     let serverTypes = mailAccounts["serverTypes"];
     let accountsExcluded = mailAccounts["excludedAccounts"];
-    let accountsByServerType = firetray.Messaging.accountsByServerType();
+    let accountsByServerType = icetray.Messaging.accountsByServerType();
     log.debug(JSON.stringify(accountsByServerType));
 
     // sort serverTypes according to order
@@ -621,7 +621,7 @@ var firetrayUIOptions = {
         let folderChildren = document.createElement('treechildren');
         let folderChildrenCount = 0;
         let msgAccount = MailServices.accounts.getIncomingServer(account.key);
-        firetray.Messaging.applyToSubfolders(msgAccount.rootFolder, true, function(folder) {
+        icetray.Messaging.applyToSubfolders(msgAccount.rootFolder, true, function(folder) {
           if (!(folder.flags & Ci.nsMsgFolderFlags.Favorite)) return;
 
           log.debug("adding folder favorite="+folder.prettyName);
@@ -661,7 +661,7 @@ var firetrayUIOptions = {
     }
 
     let tree = document.getElementById("ui_tree_mail_accounts");
-    let listener = {evt:'keypress', fn:firetrayUIOptions.onKeyPressTreeAccountsOrServerTypes, cap:true};
+    let listener = {evt:'keypress', fn:icetrayUIOptions.onKeyPressTreeAccountsOrServerTypes, cap:true};
     this.addListener(tree, listener);
   },
 
@@ -687,12 +687,12 @@ var firetrayUIOptions = {
       let checkboxCell = mutation.target;
       let tree = document.getElementById("ui_tree_mail_accounts");
 
-      let subRows = firetray.Utils.XPath(
+      let subRows = icetray.Utils.XPath(
         checkboxCell,
         'ancestor::xul:treeitem[1]/child::xul:treechildren/xul:treeitem/xul:treerow');
       log.debug("subRows="+subRows);
       for (let i=0, len=subRows.length; i<len; ++i) {
-        firetrayUIOptions._disableTreeRow(
+        icetrayUIOptions._disableTreeRow(
           subRows[i], (checkboxCell.getAttribute("value") === "false"));
       }
 
@@ -710,7 +710,7 @@ var firetrayUIOptions = {
 
   addMailAccountsObserver: function() {
     this.mutationObserver = new MutationObserver(function(mutations) {
-      mutations.forEach(firetrayUIOptions.onMutation);
+      mutations.forEach(icetrayUIOptions.onMutation);
     });
     let config = { attributes: true, childList: true, characterData: false, subtree: true };
     let target = document.querySelector('#ui_mail_accounts');
@@ -787,10 +787,10 @@ var firetrayUIOptions = {
 window.addEventListener(
   'load', function (e) {
     removeEventListener('load', arguments.callee, true);
-    firetrayUIOptions.onLoad(e); },
+    icetrayUIOptions.onLoad(e); },
   false);
 window.addEventListener(
   'unload', function (e) {
     removeEventListener('unload', arguments.callee, true);
-    firetrayUIOptions.onQuit(e); },
+    icetrayUIOptions.onQuit(e); },
   false);

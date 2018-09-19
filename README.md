@@ -1,12 +1,6 @@
-Firetray
+Icetray
 =======
 
-**[THIS PROJECT IS DISCONTINUED](https://foudil.fr/blog/209/the-web-is-not-the-platform/)**
-
-Overview
---------
-
-Js-ctypes rewrite of the binary XPCOM version of **Firetray**.
 
 Features
 --------
@@ -25,8 +19,8 @@ Features
   * StatusNotifierItem support (can be disabled by `with_appindicator` hidden pref)
   * customizable tray icons
   * popup menu (show/hide individual windows, open new windows, quit)
-  * command-line `-firetrayShowHide` option (useful for window manager's keyboard shortcuts)
-  * command-line `-firetrayPresent` option (activates windows)
+  * command-line `-icetrayShowHide` option (useful for window manager's keyboard shortcuts)
+  * command-line `-icetrayPresent` option (activates windows)
   * middle click on the tray icon activates last registered window
 
 * for mail applications:
@@ -40,7 +34,7 @@ Features
   * trigger external program on message count change
   * show icon only when new mail (mutually exclusive with *show icon only when hidden to tray*)
 
-* for applications embedding chat (currently only Thunderbird)
+* for applications embedding chat (currently only Icedove-UXP)
   * display additional system tray status icon
 
 
@@ -51,7 +45,7 @@ Notes
   * GTK+ 2.20+ required.
   * libappindicator3 can be used for StatusNotifierItem (KDE, Unity).
 * Under Windows, few features are not yet implemented.
-* Firetray temporarily unsets:
+* Icetray temporarily unsets:
   * the `tabs.warnOnClose` built-in preference, which otherwise disrupts the handeling of the close event
   * `mail.biff.show_tray_icon` for mail applications
 
@@ -83,7 +77,7 @@ KNOWN BUGS
   [MailAlert extension](https://addons.mozilla.org/en-US/thunderbird/addon/mailbox-alert/)
 
 * child windows (compose message, preferences, ...)  are not handled by
-  Firetray. For ex., they are not hidden along with there top-level window.
+  Icetray. For ex., they are not hidden along with there top-level window.
 
 * because of `getNumNewMessages()`'s
   [strange behaviour](https://bugzilla.mozilla.org/show_bug.cgi?id=727460),

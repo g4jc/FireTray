@@ -10,17 +10,17 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/ctypes/ctypes-utils.jsm");
-Cu.import("resource://firetray/ctypes/linux/gio.jsm");
-Cu.import("resource://firetray/ctypes/linux/gobject.jsm");
-Cu.import("resource://firetray/ctypes/linux/pango.jsm");
-Cu.import("resource://firetray/ctypes/linux/gtk2/gdk.jsm");
+Cu.import("resource://icetray/ctypes/ctypes-utils.jsm");
+Cu.import("resource://icetray/ctypes/linux/gio.jsm");
+Cu.import("resource://icetray/ctypes/linux/gobject.jsm");
+Cu.import("resource://icetray/ctypes/linux/pango.jsm");
+Cu.import("resource://icetray/ctypes/linux/gtk2/gdk.jsm");
 
 function gtk_defines(lib) {
 
-  this.FIRETRAY_REQUIRED_GTK_MAJOR_VERSION = 2;
-  this.FIRETRAY_REQUIRED_GTK_MINOR_VERSION = 20;
-  this.FIRETRAY_REQUIRED_GTK_MICRO_VERSION = 0;
+  this.ICETRAY_REQUIRED_GTK_MAJOR_VERSION = 2;
+  this.ICETRAY_REQUIRED_GTK_MINOR_VERSION = 20;
+  this.ICETRAY_REQUIRED_GTK_MICRO_VERSION = 0;
 
   this.GtkIconSize = ctypes.int; // enum
   this.GTK_ICON_SIZE_INVALID = 0;

@@ -38,5 +38,5 @@ xgetselectionowner: xgetselectionowner.c
 teststatusicon: teststatusicon.c prop-editor.c
 	gcc $(includes_gtk) -o teststatusicon teststatusicon.c prop-editor.c
 
-gtk-version: gtk-version.c ../src/lib/linux/firetray_x86_64-gcc4.so
-	gcc $(includes_gdk_gtk) ../src/lib/linux/firetray_x86_64-gcc4.so -o gtk-version gtk-version.c
+gtk-version: gtk-version.c ../src/lib/linux/icetray_x86_64-gcc4.so
+	gcc $(includes_gdk_gtk) ../src/lib/linux/icetray_x86_64-gcc4.so -o gtk-version gtk-version.c

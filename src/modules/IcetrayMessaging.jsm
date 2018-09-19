@@ -1,6 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = [ "firetray", "FLDRS_UNINTERESTING" ];
+var EXPORTED_SYMBOLS = [ "icetray", "FLDRS_UNINTERESTING" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -10,7 +10,7 @@ Cu.import("resource:///modules/iteratorUtils.jsm");
 Cu.import("resource:///modules/mailServices.js");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/PluralForm.jsm");
-Cu.import("resource://firetray/commons.js");
+Cu.import("resource://icetray/commons.js");
 
 const FLDRS_UNINTERESTING = {
   Archive:   Ci.nsMsgFolderFlags.Archive,   // 0x00004000
@@ -25,10 +25,10 @@ const FLDRS_UNINTERESTING = {
 
 const ACCOUNTS_PREF_BRANCH = "mail.accountmanager.accounts";
 
-let log = firetray.Logging.getLogger("firetray.Messaging");
+let log = icetray.Logging.getLogger("icetray.Messaging");
 
 
-firetray.Messaging = {
+icetray.Messaging = {
   initialized: false,
   currentMsgCount: null,
   newMsgCount: null,
@@ -83,7 +83,7 @@ firetray.Messaging = {
     at shutdown because MailServices.accounts no longer available */
   cleanExcludedAccounts: function() {
     log.info("* cleaning *");
-    let mailAccounts = firetray.Utils.getObjPref('mail_accounts');
+    let mailAccounts = icetray.Utils.getObjPref('mail_accounts');
     let excludedAccounts = mailAccounts["excludedAccounts"];
 
     // build current list of account server keys
@@ -105,7 +105,7 @@ firetray.Messaging = {
     if (cleaningNeeded) {
       log.debug("cleaning excluded accounts");
       let prefObj = {"serverTypes":mailAccounts["serverTypes"], "excludedAccounts":newExcludedAccounts};
-      firetray.Utils.setObjPref('mail_accounts', prefObj);
+      icetray.Utils.setObjPref('mail_accounts', prefObj);
     }
   },
 
@@ -144,23 +144,23 @@ firetray.Messaging = {
     },
 
     onMsgCountChange: function(item, property, oldValue, newValue) {
-      let excludedFoldersFlags = firetray.Utils.prefService.getIntPref("excluded_folders_flags");
-      let onlyFavorites = firetray.Utils.prefService.getBoolPref("only_favorite_folders");
-      let msgCountType = firetray.Utils.prefService.getIntPref("message_count_type");
+      let excludedFoldersFlags = icetray.Utils.prefService.getIntPref("excluded_folders_flags");
+      let onlyFavorites = icetray.Utils.prefService.getBoolPref("only_favorite_folders");
+      let msgCountType = icetray.Utils.prefService.getIntPref("message_count_type");
 
       if (!(item.flags & excludedFoldersFlags)) {
         let prop = property.toString();
         if (prop === "FolderFlag" && onlyFavorites) {
           if ((oldValue ^ newValue) & Ci.nsMsgFolderFlags.Favorite)
-            firetray.Messaging.updateMsgCountWithCb();
+            icetray.Messaging.updateMsgCountWithCb();
         } else if (prop === "TotalUnreadMessages" &&
-                   msgCountType === FIRETRAY_MESSAGE_COUNT_TYPE_UNREAD) {
-          firetray.Messaging.updateMsgCountWithCb();
+                   msgCountType === ICETRAY_MESSAGE_COUNT_TYPE_UNREAD) {
+          icetray.Messaging.updateMsgCountWithCb();
         } else if (prop === "NewMessages" &&
-                   msgCountType === FIRETRAY_MESSAGE_COUNT_TYPE_NEW) {
+                   msgCountType === ICETRAY_MESSAGE_COUNT_TYPE_NEW) {
           if (oldValue === true && newValue === false)
             item.setNumNewMessages(0); // https://bugzilla.mozilla.org/show_bug.cgi?id=727460
-          firetray.Messaging.updateMsgCountWithCb();
+          icetray.Messaging.updateMsgCountWithCb();
         }
       }
     }
@@ -175,25 +175,25 @@ firetray.Messaging = {
 
     if ("undefined" === typeof(callback) || !callback)
       callback = function(currentMsgCount, newMsgCount) { // default
-        firetray.Messaging.updateIcon(newMsgCount);
+        icetray.Messaging.updateIcon(newMsgCount);
 
         if (newMsgCount !== currentMsgCount) {
-          let mailChangeTriggerFile = firetray.Utils.prefService.getCharPref("mail_change_trigger");
+          let mailChangeTriggerFile = icetray.Utils.prefService.getCharPref("mail_change_trigger");
           if (mailChangeTriggerFile)
-            firetray.Messaging.runProcess(mailChangeTriggerFile, [newMsgCount.toString()]);
+            icetray.Messaging.runProcess(mailChangeTriggerFile, [newMsgCount.toString()]);
 
-          let getAttention = firetray.Utils.prefService.getBoolPref("mail_get_attention");
+          let getAttention = icetray.Utils.prefService.getBoolPref("mail_get_attention");
           if (getAttention && (newMsgCount > currentMsgCount))
-            for (let winId in firetray.Handler.windows)
-              firetray.Handler.windowGetAttention(winId);
+            for (let winId in icetray.Handler.windows)
+              icetray.Handler.windowGetAttention(winId);
         }
       };
 
-    let msgCountType = firetray.Utils.prefService.getIntPref("message_count_type");
+    let msgCountType = icetray.Utils.prefService.getIntPref("message_count_type");
     log.debug("msgCountType="+msgCountType);
-    if (msgCountType === FIRETRAY_MESSAGE_COUNT_TYPE_UNREAD) {
+    if (msgCountType === ICETRAY_MESSAGE_COUNT_TYPE_UNREAD) {
       this.countMessages("UnreadMessages");
-    } else if (msgCountType === FIRETRAY_MESSAGE_COUNT_TYPE_NEW) {
+    } else if (msgCountType === ICETRAY_MESSAGE_COUNT_TYPE_NEW) {
       this.countMessages("HasNewMessages");
     } else
       log.error('unknown message count type');
@@ -209,55 +209,55 @@ firetray.Messaging = {
     if ("undefined" === typeof(msgCount)) msgCount = this.currentMsgCount;
 
     let localizedTooltip;
-    let msgCountType = firetray.Utils.prefService.getIntPref("message_count_type");
-    if (msgCountType === FIRETRAY_MESSAGE_COUNT_TYPE_UNREAD) {
+    let msgCountType = icetray.Utils.prefService.getIntPref("message_count_type");
+    if (msgCountType === ICETRAY_MESSAGE_COUNT_TYPE_UNREAD) {
       localizedTooltip = PluralForm.get(
         msgCount,
-        firetray.Utils.strings.GetStringFromName("tooltip.unread_messages"))
+        icetray.Utils.strings.GetStringFromName("tooltip.unread_messages"))
         .replace("#1", msgCount);
       log.debug(localizedTooltip);
-    } else if (msgCountType === FIRETRAY_MESSAGE_COUNT_TYPE_NEW) {
-      localizedTooltip = firetray.Utils.strings.GetStringFromName("tooltip.new_messages");
+    } else if (msgCountType === ICETRAY_MESSAGE_COUNT_TYPE_NEW) {
+      localizedTooltip = icetray.Utils.strings.GetStringFromName("tooltip.new_messages");
     } else
       log.error('unknown message count type');
 
     if (msgCount == 0) {
 
-      firetray.Handler.setIconImageDefault();
-      firetray.Handler.setIconTooltipDefault();
+      icetray.Handler.setIconImageDefault();
+      icetray.Handler.setIconTooltipDefault();
 
     } else if (msgCount > 0) {
-      let prefMailNotification = firetray.Utils.prefService.getIntPref('mail_notification_type');
+      let prefMailNotification = icetray.Utils.prefService.getIntPref('mail_notification_type');
       log.debug("msgCount prefMailNotification="+prefMailNotification);
       switch (prefMailNotification) {
-      case FIRETRAY_NOTIFICATION_MESSAGE_COUNT:
-        let prefIconTextColor = firetray.Utils.prefService.getCharPref("icon_text_color");
-        firetray.Handler.setIconText(msgCount.toString(), prefIconTextColor);
+      case ICETRAY_NOTIFICATION_MESSAGE_COUNT:
+        let prefIconTextColor = icetray.Utils.prefService.getCharPref("icon_text_color");
+        icetray.Handler.setIconText(msgCount.toString(), prefIconTextColor);
         break;
-      case FIRETRAY_NOTIFICATION_NEWMAIL_ICON:
-        firetray.Handler.setIconImageNewMail();
+      case ICETRAY_NOTIFICATION_NEWMAIL_ICON:
+        icetray.Handler.setIconImageNewMail();
         break;
-      case FIRETRAY_NOTIFICATION_CUSTOM_ICON:
-        firetray.Handler.setIconImageCustom('mail_icon_custom');
+      case ICETRAY_NOTIFICATION_CUSTOM_ICON:
+        icetray.Handler.setIconImageCustom('mail_icon_custom');
         break;
       default:
         log.error("Unknown notification mode: "+prefMailNotification);
       }
 
-      firetray.Handler.setIconTooltip(localizedTooltip);
+      icetray.Handler.setIconTooltip(localizedTooltip);
 
     } else {
       throw "negative message count"; // should never happen
     }
 
-    firetray.Handler.showHideIcon(msgCount);
+    icetray.Handler.showHideIcon(msgCount);
   },
 
   /**
    * computes total unread or new message count.
    */
   countMessages: function(countType) {
-    let mailAccounts = firetray.Utils.getObjPref('mail_accounts');
+    let mailAccounts = icetray.Utils.getObjPref('mail_accounts');
     log.debug("mail accounts from pref: "+JSON.stringify(mailAccounts));
     let serverTypes = mailAccounts["serverTypes"];
     let excludedAccounts = mailAccounts["excludedAccounts"];
@@ -266,7 +266,7 @@ firetray.Messaging = {
     let accounts = new this.Accounts();
     for (let accountServer in accounts) { // nsIMsgIncomingServer
 
-      if (accountServer.type === FIRETRAY_ACCOUNT_SERVER_TYPE_IM) {
+      if (accountServer.type === ICETRAY_ACCOUNT_SERVER_TYPE_IM) {
         continue;               // IM messages are counted elsewhere
       } else if (!serverTypes[accountServer.type]) {
         log.warn("'"+accountServer.type+"' server type is not handled");
@@ -280,7 +280,7 @@ firetray.Messaging = {
 
       this.applyToSubfolders(
         accountServer.rootFolder,
-        firetray.Utils.prefService.getBoolPref("folder_count_recursive"),
+        icetray.Utils.prefService.getBoolPref("folder_count_recursive"),
         function(folder){this.msgCountIterate(countType, folder);}
       );
 
@@ -299,7 +299,7 @@ firetray.Messaging = {
       while(subFolders.hasMoreElements()) {
         let subFolder = subFolders.getNext().QueryInterface(Ci.nsIMsgFolder);
         if (recursive && subFolder.hasSubFolders)
-          firetray.Messaging.applyToSubfoldersRecursive(subFolder, recursive, fun);
+          icetray.Messaging.applyToSubfoldersRecursive(subFolder, recursive, fun);
         else
           fun.call(this, subFolder);
       }
@@ -314,11 +314,11 @@ firetray.Messaging = {
    * @param type: one of 'UnreadMessages', 'HasNewMessages'
    */
   msgCountIterate: function(type, folder) {
-    let onlyFavorites = firetray.Utils.prefService.getBoolPref("only_favorite_folders");
-    let excludedFoldersFlags = firetray.Utils.prefService.getIntPref("excluded_folders_flags");
+    let onlyFavorites = icetray.Utils.prefService.getBoolPref("only_favorite_folders");
+    let excludedFoldersFlags = icetray.Utils.prefService.getIntPref("excluded_folders_flags");
     if (!(folder.flags & excludedFoldersFlags)) {
       if (!onlyFavorites || folder.flags & Ci.nsMsgFolderFlags.Favorite) {
-        firetray.Messaging["add"+type](folder);
+        icetray.Messaging["add"+type](folder);
       }
     }
     log.debug("newMsgCount="+this.newMsgCount);
@@ -365,7 +365,7 @@ firetray.Messaging = {
  * @param sortByTypeAndName: boolean
  * @return a generator over all nsIMsgIncomingServer including hidden and IM ones
  */
-firetray.Messaging.Accounts = function(sortByTypeAndName) {
+icetray.Messaging.Accounts = function(sortByTypeAndName) {
   if (typeof(sortByTypeAndName) == "undefined") {
     this.sortByTypeAndName = false;
     return;
@@ -376,7 +376,7 @@ firetray.Messaging.Accounts = function(sortByTypeAndName) {
   this.sortByTypeAndName = sortByTypeAndName;
 };
 
-firetray.Messaging.Accounts.prototype.__iterator__ = function() {
+icetray.Messaging.Accounts.prototype.__iterator__ = function() {
   log.debug("sortByTypeAndName="+this.sortByTypeAndName);
 
   /* NOTE: sort() not provided by nsIMsgAccountManager.accounts
@@ -388,7 +388,7 @@ firetray.Messaging.Accounts.prototype.__iterator__ = function() {
     accountServers.push(accountServer.incomingServer);
   }
 
-  let mailAccounts = firetray.Utils.getObjPref('mail_accounts');
+  let mailAccounts = icetray.Utils.getObjPref('mail_accounts');
   let serverTypes = mailAccounts["serverTypes"];
   if (this.sortByTypeAndName) {
     accountServers.sort(function(a,b) {
@@ -417,9 +417,9 @@ firetray.Messaging.Accounts.prototype.__iterator__ = function() {
  *
  * ex: { movemail: {"server1", "server2"}, imap: {"server3"} }
  */
-firetray.Messaging.accountsByServerType = function() {
+icetray.Messaging.accountsByServerType = function() {
   let accountsByServerType = {};
-  let accounts = new firetray.Messaging.Accounts(false);
+  let accounts = new icetray.Messaging.Accounts(false);
   for (let accountServer in accounts) {
     let accountServerKey = accountServer.key.toString();
     let accountServerName = accountServer.prettyName;

@@ -6,9 +6,9 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/AddonManager.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://firetray/logging.jsm");
+Cu.import("resource://icetray/logging.jsm");
 
-let log = firetray.Logging.getLogger("firetray.VersionChange");
+let log = icetray.Logging.getLogger("icetray.VersionChange");
 
 /**
  * handles version changes.

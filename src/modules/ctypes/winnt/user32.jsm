@@ -6,8 +6,8 @@ const USER32_ABIS    = [ "dll" ];
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/ctypes/ctypes-utils.jsm");
-Cu.import("resource://firetray/ctypes/winnt/win32.jsm");
+Cu.import("resource://icetray/ctypes/ctypes-utils.jsm");
+Cu.import("resource://icetray/ctypes/winnt/win32.jsm");
 
 function user32_defines(lib) {
 

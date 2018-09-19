@@ -1,6 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = [ "firetray" ];
+var EXPORTED_SYMBOLS = [ "icetray" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -8,7 +8,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-const FIRETRAY_LOG_LEVEL = "Warn"; // "All" for debugging
+const ICETRAY_LOG_LEVEL = "Warn"; // "All" for debugging
 
 const COLOR_NORMAL          = "";
 const COLOR_RESET           = "\033[m";
@@ -44,12 +44,12 @@ var colorTermLogColors = {
   "ALL":    COLOR_NORMAL
 };
 
-if ("undefined" == typeof(firetray)) {
-  var firetray = {};
+if ("undefined" == typeof(icetray)) {
+  var icetray = {};
 };
 
 // https://wiki.mozilla.org/Labs/JS_Modules#Logging
-firetray.Logging = {
+icetray.Logging = {
   initialized: false,
   LogMod: null,
 
@@ -59,7 +59,7 @@ firetray.Logging = {
     ["resource://gre/modules/Log.jsm",           // FF 27+
      "resource://services-common/log4moz.js",    // FF
      "resource:///app/modules/gloda/log4moz.js", // TB
-     "resource://firetray/log4moz.js"]           // default
+     "resource://icetray/log4moz.js"]           // default
       .forEach(function(file){
         try {Cu.import(file);} catch(x) {}
       }, this);
@@ -74,9 +74,9 @@ firetray.Logging = {
       Cu.reportError(errMsg);
     };
 
-    this.setupLogging("firetray");
+    this.setupLogging("icetray");
 
-    let log = this.getLogger("firetray.Logging");
+    let log = this.getLogger("icetray.Logging");
     log.debug("initialized");
 
     this.initialized = true;
@@ -85,8 +85,8 @@ firetray.Logging = {
   setupLogging: function(loggerName) {
 
     // lifted from log4moz.js
-    function SimpleFormatter() {firetray.Logging.LogMod.Formatter.call(this);}
-    SimpleFormatter.prototype = Object.create(firetray.Logging.LogMod.Formatter.prototype);
+    function SimpleFormatter() {icetray.Logging.LogMod.Formatter.call(this);}
+    SimpleFormatter.prototype = Object.create(icetray.Logging.LogMod.Formatter.prototype);
     SimpleFormatter.prototype.constructor = SimpleFormatter;
     SimpleFormatter.prototype.format = function(message) {
       let date = new Date(message.time);
@@ -116,7 +116,7 @@ firetray.Logging = {
     // Loggers are hierarchical, affiliation is handled by a '.' in the name.
     this._logger = this.LogMod.repository.getLogger(loggerName);
     // Lowering this log level will affect all of our addon output
-    this._logger.level = this.LogMod.Level[FIRETRAY_LOG_LEVEL];
+    this._logger.level = this.LogMod.Level[ICETRAY_LOG_LEVEL];
 
     // A console appender outputs to the JS Error Console
     let simpleFormatter = new SimpleFormatter();
@@ -140,6 +140,6 @@ firetray.Logging = {
     return this.LogMod.repository.getLogger(loggerName);
   }
 
-};                              // firetray.Logging
+};                              // icetray.Logging
 
-firetray.Logging.init();
+icetray.Logging.init();

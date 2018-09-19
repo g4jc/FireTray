@@ -1,54 +1,54 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = [ "firetray" ];
+var EXPORTED_SYMBOLS = [ "icetray" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/commons.js"); // first for Handler.app !
-Cu.import("resource://firetray/ctypes/linux/"+firetray.Handler.app.widgetTk+"/gdk.jsm");
-Cu.import("resource://firetray/ctypes/linux/gio.jsm");
-Cu.import("resource://firetray/ctypes/linux/glib.jsm");
-Cu.import("resource://firetray/ctypes/linux/gobject.jsm");
-Cu.import("resource://firetray/ctypes/linux/libc.jsm");
-Cu.import("resource://firetray/ctypes/linux/x11.jsm");
-firetray.Handler.subscribeLibsForClosing([gdk, gio, glib, gobject]);
+Cu.import("resource://icetray/commons.js"); // first for Handler.app !
+Cu.import("resource://icetray/ctypes/linux/"+icetray.Handler.app.widgetTk+"/gdk.jsm");
+Cu.import("resource://icetray/ctypes/linux/gio.jsm");
+Cu.import("resource://icetray/ctypes/linux/glib.jsm");
+Cu.import("resource://icetray/ctypes/linux/gobject.jsm");
+Cu.import("resource://icetray/ctypes/linux/libc.jsm");
+Cu.import("resource://icetray/ctypes/linux/x11.jsm");
+icetray.Handler.subscribeLibsForClosing([gdk, gio, glib, gobject]);
 
-let log = firetray.Logging.getLogger("firetray.StatusIcon");
+let log = icetray.Logging.getLogger("icetray.StatusIcon");
 
-if ("undefined" == typeof(firetray.Handler))
-  log.error("This module MUST be imported from/after FiretrayHandler !");
+if ("undefined" == typeof(icetray.Handler))
+  log.error("This module MUST be imported from/after IcetrayHandler !");
 
 
-firetray.StatusIcon = {
+icetray.StatusIcon = {
   initialized: false,
   callbacks: {}, // pointers to JS functions. MUST LIVE DURING ALL THE EXECUTION
   prefAppIconNames: null,
   prefNewMailIconNames: null,
   defaultAppIconName: null,
   defaultNewMailIconName: null,
-  THEME_ICON_PATH: (function(){return firetray.Utils.chromeToPath(
-    "chrome://firetray/skin/icons/linux");})(),
+  THEME_ICON_PATH: (function(){return icetray.Utils.chromeToPath(
+    "chrome://icetray/skin/icons/linux");})(),
 
   init: function() {
     this.defineIconNames();
 
-    if (firetray.Handler.useAppind) {
-      Cu.import("resource://firetray/linux/FiretrayAppIndicator.jsm");
+    if (icetray.Handler.useAppind) {
+      Cu.import("resource://icetray/linux/IcetrayAppIndicator.jsm");
     } else {
-      Cu.import("resource://firetray/linux/FiretrayGtkStatusIcon.jsm");
+      Cu.import("resource://icetray/linux/IcetrayGtkStatusIcon.jsm");
     }
 
     // PopupMenu g_connect's some Handler functions. As these are overridden is
     // StatusIcon implementations, PopupMenu must be initialized *after*
     // implemenations are imported.
-    Cu.import("resource://firetray/linux/FiretrayPopupMenu.jsm");
-    if (!firetray.PopupMenu.init())
+    Cu.import("resource://icetray/linux/IcetrayPopupMenu.jsm");
+    if (!icetray.PopupMenu.init())
       return false;
 
-    if (!firetray.StatusIcon.initImpl())
+    if (!icetray.StatusIcon.initImpl())
       return false;
 
     this.initialized = true;
@@ -57,47 +57,47 @@ firetray.StatusIcon = {
 
   shutdown: function() {
     log.debug("Disabling StatusIcon");
-    firetray.StatusIcon.shutdownImpl();
-    firetray.PopupMenu.shutdown();
+    icetray.StatusIcon.shutdownImpl();
+    icetray.PopupMenu.shutdown();
     this.initialized = false;
   },
 
   defineIconNames: function() {
     this.prefAppIconNames = (function() {
-      if (firetray.Handler.inMailApp) {
+      if (icetray.Handler.inMailApp) {
         return "app_mail_icon_names";
-      } else if (firetray.Handler.inBrowserApp) {
+      } else if (icetray.Handler.inBrowserApp) {
         return "app_browser_icon_names";
       } else {
         return "app_default_icon_names";
       }
     })();
-    this.defaultAppIconName = firetray.Handler.app.name.toLowerCase();
+    this.defaultAppIconName = icetray.Handler.app.name.toLowerCase();
 
     this.prefNewMailIconNames = "new_mail_icon_names";
     this.defaultNewMailIconName = "mail-unread";
   },
 
   getAppIconNames: function() {
-    let appIconNames = firetray.Utils.getArrayPref(
-      firetray.StatusIcon.prefAppIconNames);
-    appIconNames.push(firetray.StatusIcon.defaultAppIconName);
+    let appIconNames = icetray.Utils.getArrayPref(
+      icetray.StatusIcon.prefAppIconNames);
+    appIconNames.push(icetray.StatusIcon.defaultAppIconName);
     return appIconNames;
   },
   getNewMailIconNames: function() {
-    let newMailIconNames = firetray.Utils.getArrayPref(
-      firetray.StatusIcon.prefNewMailIconNames);
-    newMailIconNames.push(firetray.StatusIcon.defaultNewMailIconName);
+    let newMailIconNames = icetray.Utils.getArrayPref(
+      icetray.StatusIcon.prefNewMailIconNames);
+    newMailIconNames.push(icetray.StatusIcon.defaultNewMailIconName);
     return newMailIconNames;
   },
 
   appindEnable: function() {
-    Cu.import("resource://firetray/ctypes/linux/"+
-              firetray.Handler.app.widgetTk+"/appindicator.jsm");
+    Cu.import("resource://icetray/ctypes/linux/"+
+              icetray.Handler.app.widgetTk+"/appindicator.jsm");
     /* FIXME: Ubuntu14.04/Unity: successfully closing appind crashes FF/TB
      during exit, in Ubuntu's unity-menubar.patch's code.
      https://bugs.launchpad.net/ubuntu/+source/firefox/+bug/1393256 */
-    // firetray.Handler.subscribeLibsForClosing([appind]);
+    // icetray.Handler.subscribeLibsForClosing([appind]);
 
     /* We can't reliably detect if xembed tray icons are supported, because,
      for instance, Unity/compiz falsely claims to have support for it through
@@ -108,14 +108,14 @@ firetray.StatusIcon = {
     let isAppindDesktop = (desktop.name === 'unity' ||
                            (desktop.name === 'kde' && desktop.ver > 4));
     if (isAppindDesktop && !appind.available()) {
-      log.error("Missing libappindicator for "+firetray.Handler.app.widgetTk);
+      log.error("Missing libappindicator for "+icetray.Handler.app.widgetTk);
       return false;
     }
 
     let canAppIndicator = (appind.available() &&
                            this.dbusNotificationWatcherReady());
 
-    return (firetray.Utils.prefService.getBoolPref('with_appindicator') &&
+    return (icetray.Utils.prefService.getBoolPref('with_appindicator') &&
             canAppIndicator && isAppindDesktop);
   },
 
@@ -192,24 +192,24 @@ firetray.StatusIcon = {
   },
 
   onScroll: function(direction) {
-    if (!firetray.Utils.prefService.getBoolPref("scroll_hides"))
+    if (!icetray.Utils.prefService.getBoolPref("scroll_hides"))
       return false;
 
-    let scroll_mode = firetray.Utils.prefService.getCharPref("scroll_mode");
+    let scroll_mode = icetray.Utils.prefService.getCharPref("scroll_mode");
     switch(direction) {
     case gdk.GDK_SCROLL_UP:
       log.debug("SCROLL UP");
       if (scroll_mode === "down_hides")
-        firetray.Handler.showAllWindows();
+        icetray.Handler.showAllWindows();
       else if (scroll_mode === "up_hides")
-        firetray.Handler.hideAllWindows();
+        icetray.Handler.hideAllWindows();
       break;
     case gdk.GDK_SCROLL_DOWN:
       log.debug("SCROLL DOWN");
       if (scroll_mode === "down_hides")
-        firetray.Handler.hideAllWindows();
+        icetray.Handler.hideAllWindows();
       else if (scroll_mode === "up_hides")
-        firetray.Handler.showAllWindows();
+        icetray.Handler.showAllWindows();
       break;
     case gdk.GDK_SCROLL_SMOOTH:
       // ignore
@@ -221,17 +221,17 @@ firetray.StatusIcon = {
     return true;
   }
 
-}; // firetray.StatusIcon
+}; // icetray.StatusIcon
 
 
-firetray.Handler.useAppind = firetray.StatusIcon.appindEnable();
+icetray.Handler.useAppind = icetray.StatusIcon.appindEnable();
 
-firetray.Handler.setIconTooltipDefault = function() {
+icetray.Handler.setIconTooltipDefault = function() {
   if (!this.app.name)
     throw "application name not initialized";
   this.setIconTooltip(this.app.name);
 };
 
-firetray.Handler.setIconImageCustom = function(prefname) { };
+icetray.Handler.setIconImageCustom = function(prefname) { };
 
-firetray.Handler.setIconTooltip = function(toolTipStr) { };
+icetray.Handler.setIconTooltip = function(toolTipStr) { };

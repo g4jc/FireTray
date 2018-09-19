@@ -3,7 +3,7 @@
 /* The tray icon for the main app. We need a hidden proxy window as (1) we want
  a unique icon, (2) the icon sends notifications to a single window. */
 
-var EXPORTED_SYMBOLS = [ "firetray" ];
+var EXPORTED_SYMBOLS = [ "icetray" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -12,22 +12,22 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/ctypes/ctypesMap.jsm");
-Cu.import("resource://firetray/ctypes/winnt/win32.jsm");
-Cu.import("resource://firetray/ctypes/winnt/gdi32.jsm");
-Cu.import("resource://firetray/ctypes/winnt/kernel32.jsm");
-Cu.import("resource://firetray/ctypes/winnt/shell32.jsm");
-Cu.import("resource://firetray/ctypes/winnt/user32.jsm");
-Cu.import("resource://firetray/winnt/FiretrayWin32.jsm");
-Cu.import("resource://firetray/commons.js");
-firetray.Handler.subscribeLibsForClosing([gdi32, kernel32, shell32, user32]);
+Cu.import("resource://icetray/ctypes/ctypesMap.jsm");
+Cu.import("resource://icetray/ctypes/winnt/win32.jsm");
+Cu.import("resource://icetray/ctypes/winnt/gdi32.jsm");
+Cu.import("resource://icetray/ctypes/winnt/kernel32.jsm");
+Cu.import("resource://icetray/ctypes/winnt/shell32.jsm");
+Cu.import("resource://icetray/ctypes/winnt/user32.jsm");
+Cu.import("resource://icetray/winnt/IcetrayWin32.jsm");
+Cu.import("resource://icetray/commons.js");
+icetray.Handler.subscribeLibsForClosing([gdi32, kernel32, shell32, user32]);
 
-let log = firetray.Logging.getLogger("firetray.StatusIcon");
+let log = icetray.Logging.getLogger("icetray.StatusIcon");
 
-if ("undefined" == typeof(firetray.Handler))
-  log.error("This module MUST be imported from/after FiretrayHandler !");
+if ("undefined" == typeof(icetray.Handler))
+  log.error("This module MUST be imported from/after IcetrayHandler !");
 
-const ICON_CHROME_PATH = "chrome://firetray/skin/icons/winnt";
+const ICON_CHROME_PATH = "chrome://icetray/skin/icons/winnt";
 const ICON_CHROME_FILES = {
   'blank-icon': { use:'tray', path:ICON_CHROME_PATH+"/blank-icon.bmp" },
   'mail-unread': { use:'tray', path:ICON_CHROME_PATH+"/mail-unread.ico" },
@@ -39,7 +39,7 @@ const ICON_CHROME_FILES = {
 };
 
 
-firetray.StatusIcon = {
+icetray.StatusIcon = {
   initialized: false,
   callbacks: {}, // pointers to JS functions. MUST LIVE DURING ALL THE EXECUTION
   notifyIconData: null,
@@ -60,10 +60,10 @@ firetray.StatusIcon = {
   init: function() {
     this.loadImages();
     this.create();
-    firetray.Handler.setIconImageDefault();
+    icetray.Handler.setIconImageDefault();
 
-    Cu.import("resource://firetray/winnt/FiretrayPopupMenu.jsm");
-    if (!firetray.PopupMenu.init())
+    Cu.import("resource://icetray/winnt/IcetrayPopupMenu.jsm");
+    if (!icetray.PopupMenu.init())
       return false;
 
     this.initialized = true;
@@ -72,7 +72,7 @@ firetray.StatusIcon = {
 
   shutdown: function() {
     log.debug("Disabling StatusIcon");
-    firetray.PopupMenu.shutdown();
+    icetray.PopupMenu.shutdown();
 
     this.destroy();
     this.destroyImages();
@@ -82,19 +82,19 @@ firetray.StatusIcon = {
   },
 
   loadImages: function() {
-    let topmost = firetray.Handler.getWindowInterface(
+    let topmost = icetray.Handler.getWindowInterface(
       Services.wm.getMostRecentWindow(null), "nsIBaseWindow");
-    let hwnd = firetray.Win32.hexStrToHwnd(topmost.nativeHandle);
+    let hwnd = icetray.Win32.hexStrToHwnd(topmost.nativeHandle);
     log.debug("topmost or hiddenWin hwnd="+hwnd);
     this.icons.insert('app', this.getIconFromWindow(hwnd));
     ['app_icon_custom', 'mail_icon_custom'].forEach(function(elt) {
-      firetray.StatusIcon.loadImageCustom(elt);
+      icetray.StatusIcon.loadImageCustom(elt);
     });
 
     /* we'll take the first icon in the .ico file. To get the icon count in the
      file, pass ctypes.cast(ctypes.int(-1), win32.UINT); */
     for (let imgName in ICON_CHROME_FILES) {
-      let path = firetray.Utils.chromeToPath(ICON_CHROME_FILES[imgName].path);
+      let path = icetray.Utils.chromeToPath(ICON_CHROME_FILES[imgName].path);
       let img = this.loadImageFromFile(path);
       if (img && ICON_CHROME_FILES[imgName].use == 'menu')
         /* Ideally we should rebuild the menu each time it is shown as the menu
@@ -108,7 +108,7 @@ firetray.StatusIcon = {
 
   loadImageCustom: function(prefname) {
     log.debug("loadImageCustom pref="+prefname);
-    let filename = firetray.Utils.prefService.getCharPref(prefname);
+    let filename = icetray.Utils.prefService.getCharPref(prefname);
     if (!filename) return;
     let img = this.loadImageFromFile(filename);
     if (!img) return;
@@ -141,7 +141,7 @@ firetray.StatusIcon = {
 
   HBITMAPToHICON: function(hBitmap) {
     log.debug("HBITMAPToHICON hBitmap="+hBitmap);
-    let hWnd = null; // firetray.StatusIcon.hwndProxy;
+    let hWnd = null; // icetray.StatusIcon.hwndProxy;
     let hdc = user32.GetDC(hWnd);
     let bitmap = new win32.BITMAP();
     let err = gdi32.GetObjectW(hBitmap, win32.BITMAP.size, bitmap.address()); // get bitmap info
@@ -182,10 +182,10 @@ firetray.StatusIcon = {
     let nid = new shell32.NOTIFYICONDATAW();
     nid.cbSize = shell32.NOTIFYICONDATAW_SIZE();
     log.debug("SIZE="+nid.cbSize);
-    nid.szTip = firetray.Handler.app.name;
+    nid.szTip = icetray.Handler.app.name;
     nid.hIcon = this.icons.get('app');
     nid.hWnd = hwnd_hidden;
-    nid.uCallbackMessage = firetray.Win32.WM_TRAYMESSAGE;
+    nid.uCallbackMessage = icetray.Win32.WM_TRAYMESSAGE;
     nid.uFlags = shell32.NIF_MESSAGE | shell32.NIF_ICON | shell32.NIF_TIP |
       shell32.NIF_STATE;
     nid.uVersion = shell32.NOTIFYICON_VERSION_4;
@@ -205,17 +205,17 @@ firetray.StatusIcon = {
 
     let hwnd_hidden = user32.CreateWindowExW(
       0, win32.LPCTSTR(this.WNDCLASS_ATOM), // lpClassName can also be _T(WNDCLASS_NAME)
-      "Firetray Message Window", 0,
+      "Icetray Message Window", 0,
       user32.CW_USEDEFAULT, user32.CW_USEDEFAULT, user32.CW_USEDEFAULT, user32.CW_USEDEFAULT,
-      null, null, firetray.Win32.hInstance, null);
+      null, null, icetray.Win32.hInstance, null);
     log.debug("CreateWindow="+!hwnd_hidden.isNull()+" winLastError="+ctypes.winLastError);
 
-    this.callbacks.proxyWndProc = user32.WNDPROC(firetray.StatusIcon.proxyWndProc);
+    this.callbacks.proxyWndProc = user32.WNDPROC(icetray.StatusIcon.proxyWndProc);
     let procPrev = user32.SetWindowLongW(hwnd_hidden, user32.GWLP_WNDPROC,
       ctypes.cast(this.callbacks.proxyWndProc, win32.LONG_PTR));
     log.debug("procPrev="+procPrev+" winLastError="+ctypes.winLastError);
 
-    firetray.Win32.acceptAllMessages(hwnd_hidden);
+    icetray.Win32.acceptAllMessages(hwnd_hidden);
 
     return hwnd_hidden;
   },
@@ -224,7 +224,7 @@ firetray.StatusIcon = {
     let wndClass = new user32.WNDCLASSEXW();
     wndClass.cbSize = user32.WNDCLASSEXW.size;
     wndClass.lpfnWndProc = ctypes.cast(user32.DefWindowProcW, user32.WNDPROC);
-    wndClass.hInstance = firetray.Win32.hInstance;
+    wndClass.hInstance = icetray.Win32.hInstance;
     wndClass.lpszClassName = win32._T(this.WNDCLASS_NAME);
     this.WNDCLASS_ATOM = user32.RegisterClassExW(wndClass.address());
     log.debug("WNDCLASS_ATOM="+this.WNDCLASS_ATOM);
@@ -235,15 +235,15 @@ firetray.StatusIcon = {
 
     // FIXME: WM_TASKBARCREATED is needed in case of explorer crash
     // http://twigstechtips.blogspot.fr/2011/02/c-detect-when-windows-explorer-has.html
-    if (uMsg === firetray.Win32.WM_TASKBARCREATED) {
+    if (uMsg === icetray.Win32.WM_TASKBARCREATED) {
       log.info("____________TASKBARCREATED");
 
-    } else if (uMsg === firetray.Win32.WM_TRAYMESSAGE) {
+    } else if (uMsg === icetray.Win32.WM_TRAYMESSAGE) {
 
       switch (win32.LOWORD(lParam)) {
       case win32.WM_LBUTTONUP:
         log.debug("WM_LBUTTONUP");
-        firetray.Handler.showHideAllWindows();
+        icetray.Handler.showHideAllWindows();
         break;
       case win32.WM_RBUTTONUP:
         log.debug("WM_RBUTTONUP");
@@ -257,7 +257,7 @@ firetray.StatusIcon = {
         let xPos = win32.GET_X_LPARAM(pos), yPos = win32.GET_Y_LPARAM(pos);
         log.debug("  x="+xPos+" y="+yPos);
         user32.SetForegroundWindow(hWnd);
-        user32.TrackPopupMenu(firetray.PopupMenu.menu, user32.TPM_RIGHTALIGN|user32.TPM_BOTTOMALIGN, xPos, yPos, 0, hWnd, null);
+        user32.TrackPopupMenu(icetray.PopupMenu.menu, user32.TPM_RIGHTALIGN|user32.TPM_BOTTOMALIGN, xPos, yPos, 0, hWnd, null);
         break;
       case win32.WM_MBUTTONUP:
         log.debug("WM_MBUTTONUP");
@@ -277,7 +277,7 @@ firetray.StatusIcon = {
         break;
       case win32.WM_COMMAND:
         log.debug("WM_COMMAND wParam="+wParam+", lParam="+lParam);
-        firetray.PopupMenu.processMenuItem(wParam);
+        icetray.PopupMenu.processMenuItem(wParam);
         break;
       case win32.WM_MENUCOMMAND:
         log.debug("WM_MENUCOMMAND wParam="+wParam+", lParam="+lParam);
@@ -303,7 +303,7 @@ firetray.StatusIcon = {
       log.debug("GetClassLong winLastError="+ctypes.winLastError);
     }
     if (icon.isNull()) { // from the first resource -> ERROR_RESOURCE_TYPE_NOT_FOUND(1813)
-      icon = user32.LoadIconW(firetray.Win32.hInstance, win32.MAKEINTRESOURCE(0));
+      icon = user32.LoadIconW(icetray.Win32.hInstance, win32.MAKEINTRESOURCE(0));
       log.debug("LoadIconW module winLastError="+ctypes.winLastError);
     }
     if (icon.isNull()) { // OS default icon
@@ -322,7 +322,7 @@ firetray.StatusIcon = {
   },
 
   unregisterWindowClass: function() {
-    return user32.UnregisterClassW(win32.LPCTSTR(this.WNDCLASS_ATOM), firetray.Win32.hInstance);
+    return user32.UnregisterClassW(win32.LPCTSTR(this.WNDCLASS_ATOM), icetray.Win32.hInstance);
   },
 
   destroy: function() {
@@ -332,7 +332,7 @@ firetray.StatusIcon = {
   },
 
   setIcon: function(iconinfo) {
-    let nid = firetray.StatusIcon.notifyIconData;
+    let nid = icetray.StatusIcon.notifyIconData;
     if (iconinfo.hicon)
       nid.hIcon = iconinfo.hicon;
     if (iconinfo.tip)
@@ -375,7 +375,7 @@ firetray.StatusIcon = {
       );
     }
 
-    let fnHeight = firetray.js.floatToInt(height);
+    let fnHeight = icetray.js.floatToInt(height);
       log.debug("    fnHeight initial="+fnHeight);
     let hFont = getFont(fnHeight);
     gdi32.SelectObject(hdcMem, hFont); // replace font in bitmap by hFont
@@ -396,8 +396,8 @@ firetray.StatusIcon = {
     gdi32.SetTextAlign(hdcMem, gdi32.TA_TOP|gdi32.TA_CENTER);
     log.debug("   ___ALIGN=(winLastError="+ctypes.winLastError+") "+gdi32.GetTextAlign(hdcMem));
 
-    let nXStart = firetray.js.floatToInt((width - size.cx)/2),
-        nYStart = firetray.js.floatToInt((height - size.cy)/2);
+    let nXStart = icetray.js.floatToInt((width - size.cx)/2),
+        nYStart = icetray.js.floatToInt((height - size.cy)/2);
     gdi32.TextOutW(hdcMem, width/2, nYStart+2, text, text.length); // ref point for alignment
 
     gdi32.SelectObject(hdcMem, hBitmapOrig);
@@ -424,7 +424,7 @@ firetray.StatusIcon = {
   getIconSafe: function(name) {
     let hicon = null;
     try {
-      hicon = firetray.StatusIcon.icons.get(name);
+      hicon = icetray.StatusIcon.icons.get(name);
     } catch(error) {
       log.error("icon '"+name+"' not defined.");
     }
@@ -452,7 +452,7 @@ firetray.StatusIcon = {
 
     for (let nRow=0, len=height; nRow<len; ++nRow)
       for (let nCol=0, len=width; nCol<len; ++nCol)
-        if (firetray.js.strEquals(gdi32.GetPixel(hdcDst, nCol, nRow), clrTP))
+        if (icetray.js.strEquals(gdi32.GetPixel(hdcDst, nCol, nRow), clrTP))
           gdi32.SetPixel(hdcDst, nCol, nRow, clrBK);
 
     gdi32.DeleteDC(hdcDst);
@@ -461,56 +461,56 @@ firetray.StatusIcon = {
     return hbmNew;
   }
 
-}; // firetray.StatusIcon
+}; // icetray.StatusIcon
 
-firetray.Handler.loadImageCustom = firetray.StatusIcon.loadImageCustom
-  .bind(firetray.StatusIcon);
+icetray.Handler.loadImageCustom = icetray.StatusIcon.loadImageCustom
+  .bind(icetray.StatusIcon);
 
-firetray.Handler.setIconImageDefault = function() {
+icetray.Handler.setIconImageDefault = function() {
   log.debug("setIconImageDefault");
-  let appIconType = firetray.Utils.prefService.getIntPref("app_icon_type");
-  if (appIconType === FIRETRAY_APPLICATION_ICON_TYPE_THEMED)
-    firetray.StatusIcon.setIcon({hicon:firetray.StatusIcon.icons.get('app')});
-  else if (appIconType === FIRETRAY_APPLICATION_ICON_TYPE_CUSTOM) {
-    firetray.StatusIcon.setIcon({hicon:firetray.StatusIcon.getIconSafe('app-custom')});
+  let appIconType = icetray.Utils.prefService.getIntPref("app_icon_type");
+  if (appIconType === ICETRAY_APPLICATION_ICON_TYPE_THEMED)
+    icetray.StatusIcon.setIcon({hicon:icetray.StatusIcon.icons.get('app')});
+  else if (appIconType === ICETRAY_APPLICATION_ICON_TYPE_CUSTOM) {
+    icetray.StatusIcon.setIcon({hicon:icetray.StatusIcon.getIconSafe('app-custom')});
   }
 };
 
-firetray.Handler.setIconImageNewMail = function() {
+icetray.Handler.setIconImageNewMail = function() {
   log.debug("setIconImageDefault");
-  firetray.StatusIcon.setIcon({hicon:firetray.StatusIcon.icons.get('mail-unread')});
+  icetray.StatusIcon.setIcon({hicon:icetray.StatusIcon.icons.get('mail-unread')});
 };
 
-firetray.Handler.setIconImageCustom = function(prefname) {
+icetray.Handler.setIconImageCustom = function(prefname) {
   log.debug("setIconImageCustom pref="+prefname);
-  let name = firetray.StatusIcon.PREF_TO_ICON_NAME[prefname];
-  firetray.StatusIcon.setIcon({hicon:firetray.StatusIcon.getIconSafe(name)});
+  let name = icetray.StatusIcon.PREF_TO_ICON_NAME[prefname];
+  icetray.StatusIcon.setIcon({hicon:icetray.StatusIcon.getIconSafe(name)});
 };
 
-// firetray.Handler.setIconImageFromFile = firetray.StatusIcon.setIconImageFromFile;
+// icetray.Handler.setIconImageFromFile = icetray.StatusIcon.setIconImageFromFile;
 
-firetray.Handler.setIconTooltip = function(toolTipStr) {
+icetray.Handler.setIconTooltip = function(toolTipStr) {
   log.debug("setIconTooltip");
-  firetray.StatusIcon.setIcon({tip:toolTipStr});
+  icetray.StatusIcon.setIcon({tip:toolTipStr});
 };
 
-firetray.Handler.setIconTooltipDefault = function() {
+icetray.Handler.setIconTooltipDefault = function() {
   log.debug("setIconTooltipDefault");
-  firetray.StatusIcon.setIcon({tip:this.app.name});
+  icetray.StatusIcon.setIcon({tip:this.app.name});
 };
 
-firetray.Handler.setIconText = function(text, color) {
-  let hicon = firetray.StatusIcon.createTextIcon(
-    firetray.StatusIcon.hwndProxy, text, color);
+icetray.Handler.setIconText = function(text, color) {
+  let hicon = icetray.StatusIcon.createTextIcon(
+    icetray.StatusIcon.hwndProxy, text, color);
   log.debug("setIconText icon="+hicon);
   if (hicon.isNull())
     log.error("Could not create hicon");
-  firetray.StatusIcon.setIcon({hicon:hicon});
+  icetray.StatusIcon.setIcon({hicon:hicon});
 };
 
-firetray.Handler.setIconVisibility = function(visible) {
+icetray.Handler.setIconVisibility = function(visible) {
   log.debug("setIconVisibility="+visible);
-  let nid = firetray.StatusIcon.notifyIconData;
+  let nid = icetray.StatusIcon.notifyIconData;
   if (visible)
     nid.dwState = 0;
   else

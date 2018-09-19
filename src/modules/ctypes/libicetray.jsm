@@ -1,18 +1,18 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = ["libfiretray"];
+var EXPORTED_SYMBOLS = ["libicetray"];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://firetray/logging.jsm");
+Cu.import("resource://icetray/logging.jsm");
 
-let log = firetray.Logging.getLogger("firetray.libfiretray");
+let log = icetray.Logging.getLogger("icetray.libicetray");
 
 const _path = (function(){
-  var uri = Services.io.newURI('resource://firetray-lib', null, null);
+  var uri = Services.io.newURI('resource://icetray-lib', null, null);
   path = null;
   try {
     if (uri instanceof Ci.nsIFileURL)
@@ -25,13 +25,13 @@ const _path = (function(){
 })();
 
 /*
- * the firetray is not a standard lib, with standard naming, so we have to
+ * the icetray is not a standard lib, with standard naming, so we have to
  * mimic ctypes-utils
  */
-var libfiretray = {
+var libicetray = {
 
   _lib: null,
-  name: 'libfiretray',
+  name: 'libicetray',
   _available: false,
   available: function(){return this._available;}, // compliance with ctypes-utils
 
@@ -92,8 +92,8 @@ var libfiretray = {
   }
 
 };
-libfiretray.global = this;
+libicetray.global = this;
 
-libfiretray.close = libfiretray.shutdown; // compliance with ctypes-utils
+libicetray.close = libicetray.shutdown; // compliance with ctypes-utils
 
-libfiretray.init();
+libicetray.init();

@@ -1,24 +1,24 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = [ "firetray" ];
+var EXPORTED_SYMBOLS = [ "icetray" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/ctypes/winnt/win32.jsm");
-Cu.import("resource://firetray/ctypes/winnt/kernel32.jsm");
-Cu.import("resource://firetray/ctypes/winnt/user32.jsm");
-Cu.import("resource://firetray/commons.js");
-firetray.Handler.subscribeLibsForClosing([kernel32, user32]);
+Cu.import("resource://icetray/ctypes/winnt/win32.jsm");
+Cu.import("resource://icetray/ctypes/winnt/kernel32.jsm");
+Cu.import("resource://icetray/ctypes/winnt/user32.jsm");
+Cu.import("resource://icetray/commons.js");
+icetray.Handler.subscribeLibsForClosing([kernel32, user32]);
 
-let log = firetray.Logging.getLogger("firetray.Win32");
+let log = icetray.Logging.getLogger("icetray.Win32");
 
-const kMessageTray     = "_FIRETRAY_Tray";
+const kMessageTray     = "_ICETRAY_Tray";
 
-if ("undefined" == typeof(firetray.Handler))
-  log.error("This module MUST be imported from/after FiretrayHandler !");
+if ("undefined" == typeof(icetray.Handler))
+  log.error("This module MUST be imported from/after IcetrayHandler !");
 
 
 function Win32Env() {
@@ -37,10 +37,10 @@ function Win32Env() {
     let rv = null;
     log.debug(win32.WINVER+" >= "+win32.WIN_VERSIONS["7"]);
     if (win32.WINVER >= win32.WIN_VERSIONS["7"]) {
-      rv = user32.ChangeWindowMessageFilterEx(hwnd, firetray.Win32.WM_TASKBARCREATED, user32.MSGFLT_ALLOW, null);
+      rv = user32.ChangeWindowMessageFilterEx(hwnd, icetray.Win32.WM_TASKBARCREATED, user32.MSGFLT_ALLOW, null);
       log.debug("ChangeWindowMessageFilterEx res="+rv+" winLastError="+ctypes.winLastError);
     } else if (win32.WINVER >= win32.WINVER["Vista"]) {
-      rv = user32.ChangeWindowMessageFilter(firetray.Win32.WM_TASKBARCREATED, user32.MSGFLT_ADD);
+      rv = user32.ChangeWindowMessageFilter(icetray.Win32.WM_TASKBARCREATED, user32.MSGFLT_ADD);
       log.debug("ChangeWindowMessageFilter res="+rv+" winLastError="+ctypes.winLastError);
     } else {
         // no UIPI
@@ -58,4 +58,4 @@ function Win32Env() {
 
 }
 
-firetray.Win32 = new Win32Env();
+icetray.Win32 = new Win32Env();

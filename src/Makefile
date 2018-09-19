@@ -7,7 +7,7 @@ endif
 help:
 	@echo "BUILD/INSTALL INSTRUCTIONS"
 	@echo
-	@echo "to build Firetray, just:"
+	@echo "to build Icetray, just:"
 	@echo "  make build"
 	@echo
 	@echo "by default, debug calls are stripped from js files and DEBUG_MODE"
@@ -15,26 +15,26 @@ help:
 	@echo "  DEBUG=on make build"
 	@echo
 	@echo "to create the dev profile:"
-	@echo "  firefox -no-remote -P		# then create '$(profile_id)'"
-	@echo "  thunderbird -no-remote -P	# then create '$(profile_id)'"
+	@echo "  iceweaseluxp -no-remote -P		# then create '$(profile_id)'"
+	@echo "  icedoveuxp -no-remote -P	# then create '$(profile_id)'"
 	@echo
 	@echo "to test the extension with the dev profile:"
-	@echo "  cd ~/.mozilla/firefox/mozilla-dev/extensions"
-	@echo "  ln -s ../../path/to/firetray/src '{9533f794-00b4-4354-aa15-c2bbda6989f8}'"
-	@echo "  cd ~/.thunderbird/mozilla-dev/extensions"
-	@echo "  ln -s ../path/to/firetray/src '{9533f794-00b4-4354-aa15-c2bbda6989f8}'"
+	@echo "  cd ~/.mozilla/firefox/uxp-dev/extensions"
+	@echo "  ln -s ../../path/to/icetray/src '{9533f794-00b4-4354-aa15-c2bbda6989f8}'"
+	@echo "  cd ~/.thunderbird/uxp-dev/extensions"
+	@echo "  ln -s ../path/to/icetray/src '{9533f794-00b4-4354-aa15-c2bbda6989f8}'"
 	@echo
 	@echo "to test with dev profile:"
-	@echo "  firefox -no-remote -P mozilla-dev"
-	@echo "  thunderbird -no-remote -P mozilla-dev"
+	@echo "  iceweaseluxp -no-remote -P uxp-dev"
+	@echo "  icedoveuxp -no-remote -P uxp-dev"
 	@echo
 	@echo "Have fun !"
 
 # The UUID of the extension.
-extension_name := firetray
+extension_name := icetray
 
 # The name of the profile dir where the extension can be installed.
-profile_id := mozilla-dev
+profile_id := uxp-dev
 
 # The zip application to be used. NOTE: symlinks seem not supported in XPI
 # ("could not be installed because Firefox cannot modify the needed file")
@@ -194,14 +194,14 @@ clean_build:
 	@echo "Removing build dirs: $(build_dir)*"
 	@rm -rf $(build_dir)*
 
-VERSION_HARD_CODED := $(shell awk -F\" '/const[ \t]+FIRETRAY_VERSION/ \
+VERSION_HARD_CODED := $(shell awk -F\" '/const[ \t]+ICETRAY_VERSION/ \
   {print $$2}' modules/commons.js)
 check_version:
 	@echo "checking version consistency"
 	@[ "$(VERSION)" = "$(VERSION_HARD_CODED)" ]
 
-FIRETRAY_LOG_LEVEL := $(shell awk -F\" '/const[ \t]+FIRETRAY_LOG_LEVEL/ \
+ICETRAY_LOG_LEVEL := $(shell awk -F\" '/const[ \t]+ICETRAY_LOG_LEVEL/ \
   {print $$2}' modules/logging.jsm)
 check_loglevel:
 	@echo "checking loglevel"
-	@[ "Warn" = "$(FIRETRAY_LOG_LEVEL)" ]
+	@[ "Warn" = "$(ICETRAY_LOG_LEVEL)" ]

@@ -10,9 +10,9 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/ctypes/ctypes-utils.jsm");
-Cu.import("resource://firetray/ctypes/linux/glib.jsm");
-Cu.import("resource://firetray/ctypes/linux/gobject.jsm");
+Cu.import("resource://icetray/ctypes/ctypes-utils.jsm");
+Cu.import("resource://icetray/ctypes/linux/glib.jsm");
+Cu.import("resource://icetray/ctypes/linux/gobject.jsm");
 
 function gio_defines(lib) {
   this.GIcon = ctypes.StructType("GIcon");

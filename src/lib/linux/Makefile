@@ -9,19 +9,19 @@ LDFLAGS += -shared -rdynamic
 #-Wl,-soname,libmystuff.so.1 -o libgnome.so.1.0.1
 LIBS += $(shell pkg-config --libs $(deps))
 
-libs = firetray_$(platform)-gcc$(GCCVERSION).so
+libs = icetray_$(platform)-gcc$(GCCVERSION).so
 
 all: $(libs)
 	@echo
 	@echo add this line to chrome.manifest:
-	@echo "resource	firetray-lib			lib/linux/$(libs)	abi=Linux_x86_64-gcc3"
+	@echo "resource	icetray-lib			lib/linux/$(libs)	abi=Linux_x86_64-gcc3"
 	@echo
 	@echo and use
-	@echo 'Cu.import("resource://firetray/ctypes/libfiretray.jsm");'
-	@echo 'firetray.Handler.subscribeLibsForClosing([libfiretray]);'
+	@echo 'Cu.import("resource://icetray/ctypes/libicetray.jsm");'
+	@echo 'icetray.Handler.subscribeLibsForClosing([libicetray]);'
 	@echo
 
-$(libs): firetray.o
+$(libs): icetray.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 %.o: %.c

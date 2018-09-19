@@ -1,6 +1,6 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = [ "firetray" ];
+var EXPORTED_SYMBOLS = [ "icetray" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -9,18 +9,18 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/ctypes.jsm");
-Cu.import("resource://firetray/commons.js"); // first for Handler.app !
-Cu.import("resource://firetray/ctypes/linux/gobject.jsm");
-Cu.import("resource://firetray/ctypes/linux/"+firetray.Handler.app.widgetTk+"/gtk.jsm");
-firetray.Handler.subscribeLibsForClosing([gobject, gtk]);
+Cu.import("resource://icetray/commons.js"); // first for Handler.app !
+Cu.import("resource://icetray/ctypes/linux/gobject.jsm");
+Cu.import("resource://icetray/ctypes/linux/"+icetray.Handler.app.widgetTk+"/gtk.jsm");
+icetray.Handler.subscribeLibsForClosing([gobject, gtk]);
 
-let log = firetray.Logging.getLogger("firetray.PopupMenu");
+let log = icetray.Logging.getLogger("icetray.PopupMenu");
 
-if ("undefined" == typeof(firetray.StatusIcon))
+if ("undefined" == typeof(icetray.StatusIcon))
   log.error("This module MUST be imported from/after StatusIcon !");
 
 
-firetray.PopupMenu = {
+icetray.PopupMenu = {
   MENU_ITEM_WINDOWS_POSITION: 4,
 
   initialized: false,
@@ -35,17 +35,17 @@ firetray.PopupMenu = {
     this.menuShell = ctypes.cast(this.menu, gtk.GtkMenuShell.ptr);
     var addMenuSeparator = false;
 
-    if (firetray.Handler.inMailApp) {
+    if (icetray.Handler.inMailApp) {
       this.addItem({itemName:"ResetIcon", iconName:"gtk-apply",
-                    action:"activate", callback: firetray.Handler.setIconImageDefault});
+                    action:"activate", callback: icetray.Handler.setIconImageDefault});
       this.addItem({itemName:"NewMessage", iconName:"gtk-edit",
-                    action:"activate", callback: firetray.Handler.openMailMessage});
+                    action:"activate", callback: icetray.Handler.openMailMessage});
       addMenuSeparator = true;
     }
 
-    if (firetray.Handler.inBrowserApp) {
+    if (icetray.Handler.inBrowserApp) {
       this.addItem({itemName:"NewWindow", iconName:"gtk-new",
-                    action:"activate", callback: firetray.Handler.openBrowserWindow});
+                    action:"activate", callback: icetray.Handler.openBrowserWindow});
       addMenuSeparator = true;
     }
 
@@ -57,13 +57,13 @@ firetray.PopupMenu = {
     }
 
     this.addItem({itemName:"Preferences", iconName:"gtk-preferences",
-                  action:"activate", callback: firetray.Handler.openPrefWindow});
+                  action:"activate", callback: icetray.Handler.openPrefWindow});
     menuSeparator = gtk.gtk_separator_menu_item_new();
     gtk.gtk_menu_shell_append(this.menuShell, ctypes.cast(menuSeparator,
                                                           gtk.GtkWidget.ptr));
 
     this.addItem({itemName:"Quit", iconName:"gtk-quit",
-                  action:"activate", callback: firetray.Handler.quitApplication});
+                  action:"activate", callback: icetray.Handler.quitApplication});
 
     var menuWidget = ctypes.cast(this.menu, gtk.GtkWidget.ptr);
     gtk.gtk_widget_show_all(menuWidget);
@@ -98,7 +98,7 @@ firetray.PopupMenu = {
    */
   addItem: function(it) {
     // shouldn't need to convert to utf8 later thank to js-ctypes
-    var menuItemLabel = firetray.Utils.strings
+    var menuItemLabel = icetray.Utils.strings
           .GetStringFromName("popupMenu.itemLabel."+it.itemName);
     var menuItem = gtk.gtk_image_menu_item_new_with_label(menuItemLabel);
     var menuItemIcon = gtk.gtk_image_new_from_stock(it.iconName, gtk.GTK_ICON_SIZE_MENU);
@@ -120,7 +120,7 @@ firetray.PopupMenu = {
       log.debug("cbName="+cbName);
     this.callbacks[cbName] = gobject.GCallback_t(it.callback); // void return, no sentinel
     gobject.g_signal_connect(menuItem, it.action,
-                             firetray.PopupMenu.callbacks[cbName], null);
+                             icetray.PopupMenu.callbacks[cbName], null);
 
     return menuItem;
   },
@@ -132,11 +132,11 @@ firetray.PopupMenu = {
 
     this.menuItem.activateLast = this.addItem({
       itemName:"ActivateLast", iconName:null, action:"activate", callback:
-      firetray.Handler.showAllWindowsAndActivate, inFront: true});
+      icetray.Handler.showAllWindowsAndActivate, inFront: true});
 
     this.menuItem.showHide = this.addItem({
       itemName:"ShowHide", iconName:"gtk-go-down", action:"activate", callback:
-      firetray.Handler.showHideAllWindows, inFront: true});
+      icetray.Handler.showHideAllWindows, inFront: true});
 
     this.menuItem.tip = this.createAndAddItemToMenuAt(0);
     gtk.gtk_widget_set_sensitive(
@@ -164,15 +164,15 @@ firetray.PopupMenu = {
     log.debug("addWindowItem");
     var menuItemWindow = this.createAndAddItemToMenuAt(
       this.MENU_ITEM_WINDOWS_POSITION);
-    firetray.Handler.gtkPopupMenuWindowItems.insert(xid, menuItemWindow);
+    icetray.Handler.gtkPopupMenuWindowItems.insert(xid, menuItemWindow);
     this.setItemLabel(menuItemWindow, xid.toString()); // default to xid
 
     let callback = gobject.GCallback_t(
-      function(){firetray.Handler.showWindow(xid);}); // void return, no sentinel
+      function(){icetray.Handler.showWindow(xid);}); // void return, no sentinel
     this.callbacks.menuItemWindowActivate[xid] = callback,
     gobject.g_signal_connect(menuItemWindow, "activate", callback, null);
 
-    log.debug("added gtkPopupMenuWindowItems: "+firetray.Handler.gtkPopupMenuWindowItems.count);
+    log.debug("added gtkPopupMenuWindowItems: "+icetray.Handler.gtkPopupMenuWindowItems.count);
   },
 
   createAndAddItemToMenuAt: function(pos) {
@@ -184,18 +184,18 @@ firetray.PopupMenu = {
   },
 
   removeWindowItem: function(xid) { // on unregisterWindow
-    let menuItemWindow = firetray.Handler.gtkPopupMenuWindowItems.get(xid);
-    firetray.Handler.gtkPopupMenuWindowItems.remove(xid);
+    let menuItemWindow = icetray.Handler.gtkPopupMenuWindowItems.get(xid);
+    icetray.Handler.gtkPopupMenuWindowItems.remove(xid);
     this.removeItem(menuItemWindow);
-    log.debug("remove gtkPopupMenuWindowItems: "+firetray.Handler.gtkPopupMenuWindowItems.count);
+    log.debug("remove gtkPopupMenuWindowItems: "+icetray.Handler.gtkPopupMenuWindowItems.count);
   },
   removeItem: function(item) {
     gtk.gtk_widget_destroy(ctypes.cast(item, gtk.GtkWidget.ptr));
   },
 
   showAllWindowItemsOnlyVisibleWindows: function() {
-    for (let xid in firetray.Handler.windows)
-      if (!firetray.Handler.windows[xid].visible)
+    for (let xid in icetray.Handler.windows)
+      if (!icetray.Handler.windows[xid].visible)
         this.showWindowItem(xid);
   },
 
@@ -204,9 +204,9 @@ firetray.PopupMenu = {
       return;
 
     log.debug("showWindowItem");
-    let menuItemWindow = firetray.Handler.gtkPopupMenuWindowItems.get(xid);
+    let menuItemWindow = icetray.Handler.gtkPopupMenuWindowItems.get(xid);
     this.showItem(menuItemWindow);
-    this.setItemLabel(menuItemWindow, firetray.Window.getWindowTitle(xid));
+    this.setItemLabel(menuItemWindow, icetray.Window.getWindowTitle(xid));
     this.showWindowSeparator();
   },
 
@@ -221,7 +221,7 @@ firetray.PopupMenu = {
   },
 
   hideAllWindowItems: function() {
-    for (let xid in firetray.Handler.windows)
+    for (let xid in icetray.Handler.windows)
       this.hideWindowItemAndSeparator(xid);
   },
 
@@ -234,13 +234,13 @@ firetray.PopupMenu = {
     if (!this.windowItemsHandled()) return;
 
     this.hideWindowItem(xid);
-    if (firetray.Handler.visibleWindowsCount === firetray.Handler.windowsCount)
+    if (icetray.Handler.visibleWindowsCount === icetray.Handler.windowsCount)
       this.hideWindowSeparator();
   },
 
   hideWindowItem: function(xid) {
     log.debug("hideWindowItem");
-    let menuItemWindow = firetray.Handler.gtkPopupMenuWindowItems.get(xid);
+    let menuItemWindow = icetray.Handler.gtkPopupMenuWindowItems.get(xid);
     this.hideItem(menuItemWindow);
   },
 
@@ -265,10 +265,10 @@ firetray.PopupMenu = {
   },
 
   windowItemsHandled: function() {
-    return firetray.Utils.prefService.getBoolPref('hides_single_window');
+    return icetray.Utils.prefService.getBoolPref('hides_single_window');
   }
 
-}; // firetray.PopupMenu
+}; // icetray.PopupMenu
 
-firetray.Handler.showHidePopupMenuItems =
-  firetray.PopupMenu.showHideWindowItems.bind(firetray.PopupMenu);
+icetray.Handler.showHidePopupMenuItems =
+  icetray.PopupMenu.showHideWindowItems.bind(icetray.PopupMenu);

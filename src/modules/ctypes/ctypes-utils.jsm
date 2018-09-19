@@ -12,7 +12,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Firetray
+ * The Original Code is Icetray
  *
  * The Initial Developer of the Original Code is
  * Mozilla Messaging, Ltd.
@@ -42,14 +42,14 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/ctypes.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://firetray/logging.jsm");
+Cu.import("resource://icetray/logging.jsm");
 
-const is64bit = ctypes.size_t.size == 8; // firetray.Handler.app.ABI.indexOf('_64') > -1;
+const is64bit = ctypes.size_t.size == 8; // icetray.Handler.app.ABI.indexOf('_64') > -1;
 
 const WinABI   = is64bit ? ctypes.default_abi : ctypes.winapi_abi;
 const WinCbABI = is64bit ? ctypes.default_abi : ctypes.stdcall_abi;
 
-let log = firetray.Logging.getLogger("firetray.ctypes-utils");
+let log = icetray.Logging.getLogger("icetray.ctypes-utils");
 log.info("is64bit="+is64bit);
 
 /**

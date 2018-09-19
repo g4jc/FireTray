@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../src/lib/linux/firetray.h"
+#include "../src/lib/linux/icetray.h"
 
 int main(int argc, char** argv) {
   printf("gtk version: %d.%d.%d\n",

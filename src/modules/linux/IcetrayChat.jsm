@@ -1,19 +1,19 @@
 /* -*- Mode: js2; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 
-var EXPORTED_SYMBOLS = [ "firetray" ];
+var EXPORTED_SYMBOLS = [ "icetray" ];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
 Cu.import("resource:///modules/imServices.jsm");
-Cu.import("resource://firetray/commons.js");
-Cu.import("resource://firetray/linux/FiretrayChatStatusIcon.jsm");
-Cu.import("resource://firetray/linux/FiretrayWindow.jsm");
+Cu.import("resource://icetray/commons.js");
+Cu.import("resource://icetray/linux/IcetrayChatStatusIcon.jsm");
+Cu.import("resource://icetray/linux/IcetrayWindow.jsm");
 
-let log = firetray.Logging.getLogger("firetray.Chat");
+let log = icetray.Logging.getLogger("icetray.Chat");
 
-firetray.Chat = {
+icetray.Chat = {
   initialized: false,
   observedTopics: {},
   convsToAcknowledge: {
@@ -28,16 +28,16 @@ firetray.Chat = {
     }
     log.debug("Enabling Chat");
 
-    firetray.Utils.addObservers(firetray.Chat, [
+    icetray.Utils.addObservers(icetray.Chat, [
       // "*", // debugging
       "account-connected", "account-disconnected", "idle-time-changed",
       "new-directed-incoming-message", "status-changed",
       "unread-im-count-changed", "new-text"
     ]);
 
-    firetray.ChatStatusIcon.init();
-    if (firetray.Utils.prefService.getBoolPref("chat_icon_blink") &&
-        firetray.Chat.convsToAcknowledge.length())
+    icetray.ChatStatusIcon.init();
+    if (icetray.Utils.prefService.getBoolPref("chat_icon_blink") &&
+        icetray.Chat.convsToAcknowledge.length())
       this.startGetAttention();
     this.updateIcon();
 
@@ -49,11 +49,11 @@ firetray.Chat = {
     if (!this.initialized) return false;
     log.debug("Disabling Chat");
 
-    if (firetray.Chat.convsToAcknowledge.length())
+    if (icetray.Chat.convsToAcknowledge.length())
       this.stopGetAttention();
 
-    firetray.ChatStatusIcon.shutdown();
-    firetray.Utils.removeAllObservers(firetray.Chat);
+    icetray.ChatStatusIcon.shutdown();
+    icetray.Utils.removeAllObservers(icetray.Chat);
 
     this.initialized = false;
     return true;
@@ -65,14 +65,14 @@ firetray.Chat = {
     log.debug("attachSelectListeners");
     ["contactlistbox", "tabmail"].forEach(function(eltId) {
       win.document.getElementById(eltId)
-        .addEventListener('select', firetray.Chat.onSelect);
+        .addEventListener('select', icetray.Chat.onSelect);
     });
   },
 
   detachSelectListeners: function(win) {
     ["contactlistbox", "tabmail"].forEach(function(eltId) {
       win.document.getElementById(eltId)
-        .removeEventListener('select', firetray.Chat.onSelect);
+        .removeEventListener('select', icetray.Chat.onSelect);
     });
   },
 
@@ -115,13 +115,13 @@ firetray.Chat = {
       log.debug("unread-im-count-changed");
       let unreadMsgCount = data;
       if (unreadMsgCount == 0)
-        this.stopGetAttentionMaybe(firetray.Handler.getActiveWindow());
+        this.stopGetAttentionMaybe(icetray.Handler.getActiveWindow());
 
       let localizedTooltip = PluralForm.get(
         unreadMsgCount,
-        firetray.Utils.strings.GetStringFromName("tooltip.unread_messages"))
+        icetray.Utils.strings.GetStringFromName("tooltip.unread_messages"))
         .replace("#1", unreadMsgCount);
-      firetray.ChatStatusIcon.setIconTooltip(localizedTooltip);
+      icetray.ChatStatusIcon.setIconTooltip(localizedTooltip);
       break;
 
     default:
@@ -133,13 +133,13 @@ firetray.Chat = {
     log.debug('startGetAttentionMaybe conv.id='+conv.id);
 
     let convIsCurrentlyShown =
-          this.isConvCurrentlyShown(conv, firetray.Handler.getActiveWindow());
+          this.isConvCurrentlyShown(conv, icetray.Handler.getActiveWindow());
     log.debug("convIsCurrentlyShown="+convIsCurrentlyShown);
     if (convIsCurrentlyShown) return; // don't blink when conv tab already on top
 
-    log.debug("firetray.ChatStatusIcon.isBlinking="+firetray.ChatStatusIcon.isBlinking);
-    if (firetray.Utils.prefService.getBoolPref("chat_icon_blink") &&
-        !firetray.ChatStatusIcon.isBlinking)
+    log.debug("icetray.ChatStatusIcon.isBlinking="+icetray.ChatStatusIcon.isBlinking);
+    if (icetray.Utils.prefService.getBoolPref("chat_icon_blink") &&
+        !icetray.ChatStatusIcon.isBlinking)
       this.startGetAttention(conv);
 
     this.convsToAcknowledge.ids[conv.id] = conv;
@@ -151,12 +151,12 @@ firetray.Chat = {
     if (conv)
       this.setUrgencyMaybe(conv);
 
-    let blinkStyle = firetray.Utils.prefService.getIntPref("chat_icon_blink_style");
+    let blinkStyle = icetray.Utils.prefService.getIntPref("chat_icon_blink_style");
     log.debug("chat_icon_blink_style="+blinkStyle);
-    if (blinkStyle === FIRETRAY_CHAT_ICON_BLINK_STYLE_NORMAL)
-      firetray.ChatStatusIcon.startBlinking();
-    else if (blinkStyle === FIRETRAY_CHAT_ICON_BLINK_STYLE_FADE)
-      firetray.ChatStatusIcon.startFading();
+    if (blinkStyle === ICETRAY_CHAT_ICON_BLINK_STYLE_NORMAL)
+      icetray.ChatStatusIcon.startBlinking();
+    else if (blinkStyle === ICETRAY_CHAT_ICON_BLINK_STYLE_FADE)
+      icetray.ChatStatusIcon.startFading();
     else
       throw new Error("Undefined chat icon blink style.");
   },
@@ -167,7 +167,7 @@ firetray.Chat = {
   stopGetAttentionMaybe: function(xid) {
     log.debug("stopGetAttentionMaybe");
     log.debug("convsToAcknowledgeLength="+this.convsToAcknowledge.length());
-    if (!firetray.ChatStatusIcon.isBlinking) return;
+    if (!icetray.ChatStatusIcon.isBlinking) return;
 
     let selectedConv = this.getSelectedConv(xid);
     if (!selectedConv) return;
@@ -189,20 +189,20 @@ firetray.Chat = {
   stopGetAttention: function(xid) {
     log.debug("do stop get attention !!!");
     if (xid)
-      firetray.ChatStatusIcon.setUrgency(xid, false);
+      icetray.ChatStatusIcon.setUrgency(xid, false);
 
-    let blinkStyle = firetray.Utils.prefService.getIntPref("chat_icon_blink_style");
-    if (blinkStyle === FIRETRAY_CHAT_ICON_BLINK_STYLE_NORMAL)
-      firetray.ChatStatusIcon.stopBlinking();
-    else if (blinkStyle === FIRETRAY_CHAT_ICON_BLINK_STYLE_FADE)
-      firetray.ChatStatusIcon.stopFading();
+    let blinkStyle = icetray.Utils.prefService.getIntPref("chat_icon_blink_style");
+    if (blinkStyle === ICETRAY_CHAT_ICON_BLINK_STYLE_NORMAL)
+      icetray.ChatStatusIcon.stopBlinking();
+    else if (blinkStyle === ICETRAY_CHAT_ICON_BLINK_STYLE_FADE)
+      icetray.ChatStatusIcon.stopFading();
     else
       throw new Error("Undefined chat icon blink style.");
   },
 
   onSelect: function(event) {
     log.debug("select event ! ");
-    firetray.Chat.stopGetAttentionMaybe(firetray.Handler.getActiveWindow());
+    icetray.Chat.stopGetAttentionMaybe(icetray.Handler.getActiveWindow());
   },
 
   isConvCurrentlyShown: function(conv, activeWin) {
@@ -215,7 +215,7 @@ firetray.Chat = {
   },
 
   getSelectedConv: function(activeWin) {
-    if (!firetray.Handler.windows[activeWin]) return null;
+    if (!icetray.Handler.windows[activeWin]) return null;
     log.debug("getSelectedConv *");
 
     let activeChatTab = this.findSelectedChatTab(activeWin);
@@ -234,7 +234,7 @@ firetray.Chat = {
   },
 
   findSelectedChatTab: function(xid) {
-    let win = firetray.Handler.windows[xid].chromeWin;
+    let win = icetray.Handler.windows[xid].chromeWin;
     let tabmail = win.document.getElementById("tabmail");
     let chatTabs = tabmail.tabModes.chat.tabs;
     for (let tab of chatTabs)
@@ -243,7 +243,7 @@ firetray.Chat = {
   },
 
   findSelectedConv: function(xid) {
-    let win = firetray.Handler.windows[xid].chromeWin;
+    let win = icetray.Handler.windows[xid].chromeWin;
     let selectedItem = win.document.getElementById("contactlistbox").selectedItem;
     if (!selectedItem || selectedItem.localName != "imconv") return null;
     return selectedItem.conv;
@@ -252,8 +252,8 @@ firetray.Chat = {
   /* there can potentially be multiple windows, each with a Chat tab and the
    same conv open... so we need to handle urgency for all windows */
   setUrgencyMaybe: function(conv) {
-    for (let xid in firetray.Handler.windows) {
-      let win = firetray.Handler.windows[xid].chromeWin;
+    for (let xid in icetray.Handler.windows) {
+      let win = icetray.Handler.windows[xid].chromeWin;
       let contactlist = win.document.getElementById("contactlistbox");
       for (let i=0; i<contactlist.itemCount; ++i) {
         let item = contactlist.getItemAtIndex(i);
@@ -261,7 +261,7 @@ firetray.Chat = {
           continue;
         /* item.conv is only initialized if chat tab is open */
         if (item.hasOwnProperty('conv') && item.conv.target === conv) {
-          firetray.Window.setUrgency(xid, true);
+          icetray.Window.setUrgency(xid, true);
           break;
         }
       }
@@ -280,17 +280,17 @@ firetray.Chat = {
     let iconName;
     switch (userStatus) {
     case Ci.imIStatusInfo.STATUS_OFFLINE:     // 1
-      iconName = FIRETRAY_IM_STATUS_OFFLINE;
+      iconName = ICETRAY_IM_STATUS_OFFLINE;
       break;
     case Ci.imIStatusInfo.STATUS_IDLE:        // 4
     case Ci.imIStatusInfo.STATUS_AWAY:        // 5
-      iconName = FIRETRAY_IM_STATUS_AWAY;
+      iconName = ICETRAY_IM_STATUS_AWAY;
       break;
     case Ci.imIStatusInfo.STATUS_AVAILABLE:   // 7
-      iconName = FIRETRAY_IM_STATUS_AVAILABLE;
+      iconName = ICETRAY_IM_STATUS_AVAILABLE;
       break;
     case Ci.imIStatusInfo.STATUS_UNAVAILABLE: // 6
-      iconName = FIRETRAY_IM_STATUS_BUSY;
+      iconName = ICETRAY_IM_STATUS_BUSY;
       break;
     case Ci.imIStatusInfo.STATUS_UNKNOWN:     // 0
     case Ci.imIStatusInfo.STATUS_INVISIBLE:   // 2
@@ -300,7 +300,7 @@ firetray.Chat = {
 
     log.debug("IM status changed="+iconName);
     if (iconName)
-      firetray.ChatStatusIcon.setIconImage(iconName);
+      icetray.ChatStatusIcon.setIconImage(iconName);
   },
 
   globalConnectedStatus: function() {
