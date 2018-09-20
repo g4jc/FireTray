@@ -8,9 +8,9 @@
     <em:type>2</em:type>
     <em:name>IceTray</em:name>
     <em:version>0.6.2</em:version> <!-- change ICETRAY_VERSION accordingly ! -->
-    <em:creator>Hua Luo, Francesco Solero, Foudil BRÉTEL</em:creator>
-    <em:contributor>Hua Luo, Francesco Solero (Icetray original authors)</em:contributor>
-    <em:homepageURL>https://github.com/foudfou/icetray</em:homepageURL>
+    <em:creator>Hyperbola Team, Hua Luo, Francesco Solero, Foudil BRÉTEL</em:creator>
+    <em:contributor>Hua Luo, Francesco Solero (FireTray original authors)</em:contributor>
+    <em:homepageURL>https://hyperbola.info</em:homepageURL>
     <em:description>A system tray extension.</em:description>
     <em:optionsURL>chrome://icetray/content/options.xul</em:optionsURL>
     <em:iconURL>chrome://icetray/skin/icons/icetray48.png</em:iconURL>
